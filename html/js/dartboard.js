@@ -1,4 +1,22 @@
 // -----------------------------------------
+var socket;
+
+function onLoad ()
+{
+  socket = new WebSocket ("ws://localhost:8080/websocket");
+
+  socket.onmessage = function (msg)
+  {
+    draw (msg.data, 1);
+  };
+}
+
+function sendMsg ()
+{
+  socket.send (document.getElementById ('msg').value);
+}
+
+// -----------------------------------------
 function draw (focus_point, focus_power)
 {
   var canvas = document.getElementById ('dartboard_canvas');
