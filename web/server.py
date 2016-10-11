@@ -17,6 +17,7 @@ class WebSocketHandler (websocket.WebSocketHandler):
 
     def open (self):
         clients.append (self)
+        self.write_message ("HELLO")
 
     def on_message (self, message):
         print 'on_message'
@@ -63,3 +64,6 @@ if __name__ == '__main__':
         pass
 
     sniffer.stop ()
+
+    for c in clients:
+        c.write_message ("GOODBYE")

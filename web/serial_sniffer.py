@@ -28,6 +28,7 @@ class SerialSniffer (Thread):
 
         sector = 0
         power  = 0
+        time.sleep (5)
         while True:
             self.spawner.spawn_callback (self.on_sniffer_data,
                                          str (sector + 1) + '.' + str (power + 1))
@@ -35,7 +36,6 @@ class SerialSniffer (Thread):
             sector = sector%20
             power  += 1
             power  = power%3
-            time.sleep (1)
 
             if not self.sniffer_queue.empty ():
                 data = self.sniffer_queue.get ()
@@ -46,3 +46,4 @@ class SerialSniffer (Thread):
                 #data = self.readSerial ()
                 #print "<< " + data + " >> sent to Tornado"
                 #self.on_sniffer_data (data)
+            time.sleep (1)
