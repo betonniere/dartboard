@@ -62,10 +62,9 @@ char getKey ()
         {
           //wait for key to be released
         }
-        Serial.print (column);
-        Serial.print (" - ");
-        Serial.println (row);
-        blink ();
+        Serial.print (row);
+        Serial.print (".");
+        Serial.println (column);
       }
     }
 
@@ -87,3 +86,4 @@ void blink ()
     delay (50);
   }
 }
+

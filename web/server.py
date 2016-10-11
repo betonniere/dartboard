@@ -5,7 +5,6 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop     import IOLoop
 from tornado.ioloop     import PeriodicCallback
 
-
 from serial_sniffer import SerialSniffer
 
 clients = []
