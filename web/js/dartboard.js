@@ -7,7 +7,9 @@ function onLoad ()
 
   socket.onmessage = function (msg)
   {
-    draw (msg.data, 1);
+    var param = msg.data.split ('.');
+
+    draw (parseInt (param[0]), param[1]);
   };
 }
 
