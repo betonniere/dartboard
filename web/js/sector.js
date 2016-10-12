@@ -34,6 +34,51 @@ Sector.prototype.defineColors = function (even_color, odd_color)
 
 
 // *****************************************
+var BullSector = function (id , safe_area, power)
+{
+  this.sector = new Sector (id, safe_area);
+
+  this.power = power;
+
+  if (this.power == 1)
+  {
+    this.radius = 6;
+    this.sector.defineColors ("rgb(0,0,200)",
+                              "rgb(0,200)");
+
+  }
+  else
+  {
+    this.radius = 3;
+    this.sector.defineColors ("rgb(200,0,0)",
+                              "rgb(200,0,0)");
+
+  }
+};
+
+// -----------------------------------------
+BullSector.prototype.hasFocus = function (focus_point, focus_power)
+{
+  return ((focus_power == this.power) && (focus_point == this.sector.id));
+};
+
+// -----------------------------------------
+BullSector.prototype.draw = function (ctx, focus_point, focus_power)
+{
+  ctx.fillStyle = this.sector.getColor (this.hasFocus (focus_point, focus_power));
+
+  this.sector.path.arc (0, 0, this.radius,
+                        0,
+                        2*Math.PI,
+                        false);
+
+  ctx.fill (this.sector.path);
+};
+
+
+
+
+// *****************************************
 var BigSector = function (id , safe_area)
 {
   this.sector = new Sector (id, safe_area);
@@ -45,7 +90,7 @@ var BigSector = function (id , safe_area)
 // -----------------------------------------
 BigSector.prototype.hasFocus = function (focus_point, focus_power)
 {
-  return ((focus_power == 1) && (focus_point == this.sector.id+1));
+  return ((focus_power == 1) && (focus_point == this.sector.id));
 };
 
 // -----------------------------------------
@@ -54,8 +99,8 @@ BigSector.prototype.draw = function (ctx, focus_point, focus_power)
   ctx.fillStyle = this.sector.getColor (this.hasFocus (focus_point, focus_power));
 
   this.sector.path.arc (0, 0, 50-this.sector.safe_area,
+                        (this.sector.id-1)*this.sector.angle - Math.PI/20,
                         this.sector.id*this.sector.angle - Math.PI/20,
-                        (this.sector.id+1)*this.sector.angle - Math.PI/20,
                         false);
 
   this.sector.path.lineTo (0, 0);
@@ -91,7 +136,7 @@ var SmallSector = function (id , safe_area, power, width)
 // -----------------------------------------
 SmallSector.prototype.hasFocus = function (focus_point, focus_power)
 {
-  return ((focus_power == this.power) && (focus_point == this.sector.id+1));
+  return ((focus_power == this.power) && (focus_point == this.sector.id));
 };
 
 // -----------------------------------------
@@ -101,8 +146,8 @@ SmallSector.prototype.draw = function (ctx, focus_point, focus_power)
   ctx.lineWidth   = 3;
 
   this.sector.path.arc (0, 0, this.radius,
+                        (this.sector.id-1)*this.sector.angle - Math.PI/20,
                         this.sector.id*this.sector.angle - Math.PI/20,
-                        (this.sector.id+1)*this.sector.angle - Math.PI/20,
                         false);
 
   ctx.stroke (this.sector.path);

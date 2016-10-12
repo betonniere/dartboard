@@ -78,7 +78,7 @@ Dartboard.prototype.draw = function (focus_point, focus_power)
       // Simple sectors
       for (var i = 0; i < 20; i++)
       {
-        var sector = new BigSector (i, safe_area);
+        var sector = new BigSector (i+1, safe_area);
 
         sector.draw (ctx, focus_point, focus_power);
       }
@@ -88,12 +88,20 @@ Dartboard.prototype.draw = function (focus_point, focus_power)
       {
         for (var i = 0; i < 20; i++)
         {
-          var sector = new SmallSector (i, safe_area, power, 3);
+          var sector = new SmallSector (i+1, safe_area, power, 3);
 
           sector.draw (ctx, focus_point, focus_power);
         }
       }
       ctx.restore ();
+    }
+
+    // Bull's eye
+    for (var power = 1; power <= 2; power++)
+    {
+      var sector = new BullSector (50*i, safe_area, power);
+
+      sector.draw (ctx, focus_point, focus_power);
     }
 
     ctx.restore ();
