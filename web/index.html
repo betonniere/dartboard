@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html>
-
   <head>
     <meta charset="utf-8"/>
     <title>Dartboard</title>
-
-    <script src="js/sector.js"></script>
-    <script src="js/dartboard.js"></script>
-
+    <script src="scripts/framework/brython.js"></script>
     <style type="text/css">
       canvas {border: 2px solid grey;}
     </style>
   </head>
 
-  <body onload="onLoad ();">
+  <body onload="brython ({debug:1});">
+    <script type="text/python" src="scripts/dartboard.py"></script>
     <canvas id="dartboard_canvas" width="400" height="600"></canvas>
   </body>
-
 </html>

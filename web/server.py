@@ -33,9 +33,11 @@ class IndexPageHandler (web.RequestHandler):
 # --------------------------------------------
 class Application (web.Application):
     def __init__ (self):
-        handlers = [(r'/',           IndexPageHandler),
-                    (r'/js/(.*)',    web.StaticFileHandler, {'path': "js"}),
-                    (r'/websocket',  WebSocketHandler)]
+        handlers = [(r'/',             IndexPageHandler),
+                    (r'/scripts/(.*)', web.StaticFileHandler, {'path': "scripts"}),
+                    (r'/(.*py)',       web.StaticFileHandler, {'path': "scripts"}),
+                    (r'/js/(.*)',      web.StaticFileHandler, {'path': "js"}),
+                    (r'/websocket',    WebSocketHandler)]
         settings = {'template_path': '',
                     'debug':         True}
 
