@@ -10,15 +10,18 @@ from sector  import BigSector
 from sector  import SmallSector
 from sector  import BullSector
 
+from cricket import Cricket
+
 #----------------------------------
 class Dartboard:
     safe_area = 8
 
     # ----
-    def __init__ (self):
+    def __init__ (self, game):
         self.canvas = document['dartboard_canvas']
         self.ctx    = self.canvas.getContext ('2d')
         self.socket = None
+        self.game   = game
 
     # ----
     def onSocketOpen (self, evt):
@@ -32,7 +35,11 @@ class Dartboard:
             alert (msg.data);
         else:
             param = msg.data.split ('.');
-            dartboard.draw (int (param[0]), int (param[1]));
+            point = int (param[0])
+            power = int (param[1]);
+
+            self.game.onHit (point, power)
+            self.draw (point, power)
 
     # ----
     def onSocketClose (self, evt):
@@ -103,6 +110,8 @@ class Dartboard:
 
 
 #----------------------------------
-dartboard = Dartboard ()
+game = Cricket ()
+
+dartboard = Dartboard (game)
 dartboard.openSocket ()
 dartboard.draw (99, 99)
