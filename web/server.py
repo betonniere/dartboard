@@ -36,6 +36,7 @@ class Application (web.Application):
         handlers = [(r'/',             IndexPageHandler),
                     (r'/scripts/(.*)', web.StaticFileHandler, {'path': "scripts"}),
                     (r'/(.*py)',       web.StaticFileHandler, {'path': "scripts"}),
+                    (r'/(.*png)',      web.StaticFileHandler, {'path': "png"}),
                     (r'/js/(.*)',      web.StaticFileHandler, {'path': "js"}),
                     (r'/websocket',    WebSocketHandler)]
         settings = {'template_path': '',

@@ -22,10 +22,10 @@ class Dartboard:
         self.socket = None
         self.game   = game
 
-        self.canvas = document['dartboard_canvas']
-        self.ctx    = self.canvas.getContext ('2d')
+        canvas   = document['dartboard_canvas']
+        self.ctx = canvas.getContext ('2d')
 
-        self.scratchpad  = html.CANVAS (width = self.canvas.width, height = self.canvas.height)
+        self.scratchpad  = html.CANVAS (width = canvas.width, height = canvas.height)
         self.scratch_ctx = self.scratchpad.getContext ('2d')
 
         self.ctx.drawImage (self.scratchpad, 0, 0)
@@ -66,12 +66,12 @@ class Dartboard:
     # ----
     def draw (self, focus_number, focus_power):
         self.scratch_ctx.fillStyle = 'white'
-        self.scratch_ctx.fillRect (0, 0, self.canvas.width, self.canvas.height)
+        self.scratch_ctx.fillRect (0, 0, self.scratchpad.width, self.scratchpad.height)
 
-        if (self.canvas.width <= self.canvas.height):
-            size = self.canvas.width
+        if (self.scratchpad.width <= self.scratchpad.height):
+            size = self.scratchpad.width
         else:
-            size = self.canvas.height
+            size = self.scratchpad.height
 
         self.scratch_ctx.save ()
         self.scratch_ctx.scale     (size/100, size/100)
@@ -117,7 +117,7 @@ class Dartboard:
             sector.draw (self.scratch_ctx, focus_number, focus_power)
 
         self.scratch_ctx.save ()
-        self.scratch_ctx.translate (-50, 55)
+        self.scratch_ctx.translate (-50, 48)
         self.game.draw (self.scratch_ctx)
         self.scratch_ctx.restore ()
 

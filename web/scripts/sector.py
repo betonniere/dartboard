@@ -40,8 +40,8 @@ class BigSector (Sector):
         Sector.__init__ (self,
                          id,
                          safe_area,
-                         'rgb(100,100,100)',
-                         'rgb(230,230,230)',
+                         '#e0d48b',
+                         '#312e2e',
                          1)
 
     # ----
@@ -67,8 +67,8 @@ class SmallSector (Sector):
         Sector.__init__ (self,
                          id,
                          safe_area,
-                         'rgb(0,0,200)',
-                         'rgb(200,0,0)',
+                         '#d82121',
+                         '#229d23',
                          power)
 
         self.width = width
@@ -99,8 +99,8 @@ class BullSector (Sector):
         Sector.__init__ (self,
                          id,
                          safe_area,
-                         'rgb(0,0,200)',
-                         'rgb(200,0,0)',
+                         '#d82121',
+                         '#229d23',
                          power)
 
         if self.power == 1:
