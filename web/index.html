@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html height="100%">
   <head>
     <meta charset="utf-8"/>
     <title>Dartboard</title>
     <script src="scripts/framework/brython.js"></script>
     <style type="text/css">
+      body {margin: 0px;}
       canvas {border: 2px solid grey;}
     </style>
   </head>
 
   <body onload="brython ({debug:1});">
     <script type="text/python" src="scripts/dartboard.py"></script>
-    <canvas id="dartboard_canvas" width="400" height="600"></canvas>
+    <canvas id="dartboard_canvas"></canvas>
+    <audio  id="hit_sound" src="pop.ogg"></audio>
   </body>
 </html>

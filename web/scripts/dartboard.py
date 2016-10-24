@@ -1,5 +1,6 @@
 from browser import document
 from browser import html
+from browser import window
 from browser import alert
 from browser import console
 from browser import websocket
@@ -22,7 +23,11 @@ class Dartboard:
         self.socket = None
         self.game   = game
 
-        canvas   = document['dartboard_canvas']
+        canvas = document['dartboard_canvas']
+        canvas.width  = window.innerWidth
+        canvas.height = window.innerHeight
+        #canvas.mozRequestFullScreen ()
+
         self.ctx = canvas.getContext ('2d')
 
         self.scratchpad  = html.CANVAS (width = canvas.width, height = canvas.height)
@@ -69,9 +74,13 @@ class Dartboard:
         self.scratch_ctx.fillRect (0, 0, self.scratchpad.width, self.scratchpad.height)
 
         if (self.scratchpad.width <= self.scratchpad.height):
-            size = self.scratchpad.width
+            size = min (self.scratchpad.width, self.scratchpad.height*0.5)
+            game_x = -50
+            game_y = 48
         else:
-            size = self.scratchpad.height
+            size = min (self.scratchpad.height, self.scratchpad.width*0.5)
+            game_x = 68
+            game_y = -50
 
         self.scratch_ctx.save ()
         self.scratch_ctx.scale     (size/100, size/100)
@@ -116,13 +125,14 @@ class Dartboard:
             sector = BullSector (25*power, Dartboard.safe_area, power)
             sector.draw (self.scratch_ctx, focus_number, focus_power)
 
+
+        # The game panel
         self.scratch_ctx.save ()
-        self.scratch_ctx.translate (-50, 48)
+        self.scratch_ctx.translate (game_x, game_y)
         self.game.draw (self.scratch_ctx)
         self.scratch_ctx.restore ()
 
         self.scratch_ctx.restore ()
-
         self.ctx.drawImage (self.scratchpad, 0, 0)
 
 

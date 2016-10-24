@@ -37,6 +37,7 @@ class Application (web.Application):
                     (r'/scripts/(.*)', web.StaticFileHandler, {'path': "scripts"}),
                     (r'/(.*py)',       web.StaticFileHandler, {'path': "scripts"}),
                     (r'/(.*png)',      web.StaticFileHandler, {'path': "png"}),
+                    (r'/(.*ogg)',      web.StaticFileHandler, {'path': "sounds"}),
                     (r'/js/(.*)',      web.StaticFileHandler, {'path': "js"}),
                     (r'/websocket',    WebSocketHandler)]
         settings = {'template_path': '',

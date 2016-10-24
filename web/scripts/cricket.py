@@ -1,4 +1,5 @@
 from browser import console
+from browser import document
 from browser import html
 
 #----------------------------------
@@ -63,6 +64,9 @@ class Player:
 
     # ----
     def onHit (self, number, power, competitors):
+        sound = document['hit_sound']
+        sound.play ()
+
         if not self.volleyIsDone ():
             scored = self.scoreboard.removeLock (number, power)
             self.darts_used += 1
@@ -104,7 +108,7 @@ class Cricket:
     # ----
     def __init__ (self):
         self.players = []
-        self.player_count = 2
+        self.player_count = 6
         for p in range (1, self.player_count+1):
             player = Player ('P' + str (p))
             self.addPlayer (player)
