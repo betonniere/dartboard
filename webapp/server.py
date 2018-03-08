@@ -1,12 +1,14 @@
 import time
+import argparse
+
 import tornado.web       as web
 import tornado.websocket as websocket
 from tornado.httpserver import HTTPServer
 from tornado.ioloop     import IOLoop
-from tornado.ioloop     import PeriodicCallback
 
 from serial_sniffer import SerialSniffer
 
+args    = None
 clients = []
 
 # --------------------------------------------
@@ -28,7 +30,7 @@ class WebSocketHandler (websocket.WebSocketHandler):
 # --------------------------------------------
 class IndexPageHandler (web.RequestHandler):
     def get (self):
-        self.render ("index.html")
+        self.render (args.home_page)
 
 # --------------------------------------------
 class Application (web.Application):
@@ -48,17 +50,30 @@ class Application (web.Application):
 # --------------------------------------------
 def on_sniffer_data (data):
     for c in clients:
+        print data
         c.write_message (data)
+
+# -------------------------------------------------
+def parse_args ():
+  global args
+
+  parser = argparse.ArgumentParser (description="Dartboard web server")
+  parser.add_argument ('-f', '--fake',  action='store_true',                                         help='Generate fake events')
+  parser.add_argument ('-i', '--index', action='store',      dest='home_page', default='index.html', help="Home page")
+
+  args = parser.parse_args ()
 
 # --------------------------------------------
 if __name__ == '__main__':
+    parse_args ()
+
     app = Application ()
 
     server = HTTPServer (app)
     server.listen (8080)
 
     main_loop = IOLoop.instance ()
-    sniffer   = SerialSniffer (main_loop, on_sniffer_data)
+    sniffer   = SerialSniffer (main_loop, on_sniffer_data, args.fake)
 
     try:
         sniffer.start ()

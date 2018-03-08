@@ -70,9 +70,11 @@ grid_map = {'1.1': '1.1',
 
 class SerialSniffer (Thread):
     # --------------------------------------------
-    def __init__ (self, spawner, on_sniffer_data):
-        #Thread.__init__ (self, target=self.looper)
-        Thread.__init__ (self, target=self.fake_looper)
+    def __init__ (self, spawner, on_sniffer_data, fake):
+        if fake:
+            Thread.__init__ (self, target=self.fake_looper)
+        else:
+            Thread.__init__ (self, target=self.looper)
 
         self.sniffer_queue   = Queue ()
         self.spawner         = spawner
@@ -103,7 +105,12 @@ class SerialSniffer (Thread):
 
     # --------------------------------------------
     def looper (self):
-        self.sp = serial.Serial ('/dev/ttyACM0', 9600, timeout=1)
+        try:
+            self.sp = serial.Serial ('/dev/ttyACM0', 9600, timeout=1)
+        except serial.SerialException as e:
+            print e
+            return
+
         self.sp.flushInput ()
 
         while True:

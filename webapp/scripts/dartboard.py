@@ -11,12 +11,12 @@ from math    import cos
 from sector  import BigSector
 from sector  import SmallSector
 from sector  import BullSector
-
 from cricket import Cricket
 
 #----------------------------------
 class Dartboard:
-    safe_area = 8
+    safe_area        = 8
+    socket_recipient = None
 
     # ----
     def __init__ (self, game):
@@ -37,25 +37,31 @@ class Dartboard:
 
     # ----
     def onSocketOpen (self, evt):
-        pass
+        console.log ('onSocketOpen')
+        Dartboard.socket_recipient = self
 
     # ----
-    def onSocketMessage (self, msg):
-        if msg.data == "HELLO":
-            pass
-        elif msg.data == "GOODBYE":
-            alert (msg.data)
-        else:
-            param  = msg.data.split ('.')
-            number = int (param[0])
-            power  = int (param[1])
+    @staticmethod
+    def onSocketMessage (msg):
+        if Dartboard.socket_recipient:
+            console.log ('onSocketMessage ==> ' + msg.data)
 
-            self.game.onHit (number, power)
-            self.draw (number, power)
+            if msg.data == "HELLO":
+                pass
+            elif msg.data == "GOODBYE":
+                alert (msg.data)
+            else:
+                param  = msg.data.split ('.')
+                number = int (param[0])
+                power  = int (param[1])
+
+                Dartboard.socket_recipient.game.onHit (number, power)
+                Dartboard.socket_recipient.draw (number, power)
 
     # ----
     def onSocketClose (self, evt):
-        pass
+        console.log ('onSocketClose')
+        Dartboard.socket_recipient = None
 
     # ----
     def openSocket (self):
@@ -65,7 +71,7 @@ class Dartboard:
 
         self.socket = websocket.WebSocket ('ws://localhost:8080/websocket')
         self.socket.bind ('open',    self.onSocketOpen)
-        self.socket.bind ('message', self.onSocketMessage)
+        self.socket.bind ('message', Dartboard.onSocketMessage) # Only staticmethod works!
         self.socket.bind ('close',   self.onSocketClose)
 
     # ----
