@@ -20,7 +20,7 @@ from browser import html
 
 #----------------------------------
 class ScoreBoard:
-    lock_images = {0:'3.png', 1:'2.png', 2:'1.png', 3:'0.png'}
+    lock_images = {0:'3.svg', 1:'2.svg', 2:'1.svg', 3:'0.svg'}
 
     # ----
     def __init__ (self):
@@ -55,7 +55,7 @@ class ScoreBoard:
                     ctx.scale (0.5, 0.5)
                     image       = html.IMG ()
                     image.src   = ScoreBoard.lock_images[self.locks[number]]
-                    ctx.drawImage (image, 0, -10)
+                    ctx.drawImage (image, -1, -7, 10, 10)
                     ctx.restore ()
 
         ctx.restore ()

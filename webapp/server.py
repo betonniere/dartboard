@@ -34,7 +34,7 @@ class WebSocketHandler (websocket.WebSocketHandler):
 
     def open (self):
         clients.append (self)
-        self.write_message ("HELLO")
+        self.write_message ('HELLO')
 
     def on_message (self, message):
         print 'on_message'
@@ -51,13 +51,14 @@ class IndexPageHandler (web.RequestHandler):
 # --------------------------------------------
 class Application (web.Application):
     def __init__ (self):
-        handlers = [(r'/',             IndexPageHandler),
-                    (r'/scripts/(.*)', web.StaticFileHandler, {'path': "scripts"}),
-                    (r'/(.*py)',       web.StaticFileHandler, {'path': "scripts"}),
-                    (r'/(.*png)',      web.StaticFileHandler, {'path': "png"}),
-                    (r'/(.*ogg)',      web.StaticFileHandler, {'path': "sounds"}),
-                    (r'/js/(.*)',      web.StaticFileHandler, {'path': "js"}),
-                    (r'/websocket',    WebSocketHandler)]
+        handlers = [(r'/',               IndexPageHandler),
+                    (r'/scripts/(.*)',   web.StaticFileHandler, {'path': 'scripts'}),
+                    (r'/dartboard/(.*)', web.StaticFileHandler, {'path': 'scripts'}),
+                    (r'/(.*png)',        web.StaticFileHandler, {'path': 'images'}),
+                    (r'/(.*svg)',        web.StaticFileHandler, {'path': 'images'}),
+                    (r'/(.*ogg)',        web.StaticFileHandler, {'path': 'sounds'}),
+                    (r'/js/(.*)',        web.StaticFileHandler, {'path': 'js'}),
+                    (r'/websocket',      WebSocketHandler)]
         settings = {'template_path': '',
                     'debug':         True}
 
@@ -66,16 +67,18 @@ class Application (web.Application):
 # --------------------------------------------
 def on_sniffer_data (data):
     for c in clients:
-        print data
+        if args.verbose:
+            print data
         c.write_message (data)
 
 # -------------------------------------------------
 def parse_args ():
   global args
 
-  parser = argparse.ArgumentParser (description="Dartboard web server")
-  parser.add_argument ('-f', '--fake',  action='store_true',                                         help='Generate fake events')
-  parser.add_argument ('-i', '--index', action='store',      dest='home_page', default='index.html', help="Home page")
+  parser = argparse.ArgumentParser (description='Dartboard web server')
+  parser.add_argument ('-f', '--fake',    action='store_true',                                         help='Generate fake events')
+  parser.add_argument ('-v', '--verbose', action='store_true',                                         help='Verbose')
+  parser.add_argument ('-i', '--index',   action='store',      dest='home_page', default='index.html', help='Home page')
 
   args = parser.parse_args ()
 
@@ -100,4 +103,4 @@ if __name__ == '__main__':
     sniffer.stop ()
 
     for c in clients:
-        c.write_message ("GOODBYE")
+        c.write_message ('GOODBYE')

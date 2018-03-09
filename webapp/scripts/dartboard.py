@@ -24,10 +24,10 @@ from math    import pi
 from math    import sin
 from math    import cos
 
-from sector  import BigSector
-from sector  import SmallSector
-from sector  import BullSector
-from cricket import Cricket
+from dartboard.sector  import BigSector
+from dartboard.sector  import SmallSector
+from dartboard.sector  import BullSector
+from dartboard.cricket import Cricket
 
 #----------------------------------
 class Dartboard:
