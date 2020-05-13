@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (C) Yannick Le Roux.
 # This file is part of Dartboard.
 #
@@ -16,6 +17,7 @@
 
 import time
 import argparse
+import json
 
 import tornado.web       as web
 import tornado.websocket as websocket
@@ -23,8 +25,10 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop     import IOLoop
 
 from serial_sniffer import SerialSniffer
+from cricket        import Cricket
 
 args    = None
+game    = None
 clients = []
 
 # --------------------------------------------
@@ -34,31 +38,45 @@ class WebSocketHandler (websocket.WebSocketHandler):
 
     def open (self):
         clients.append (self)
-        self.write_message ('HELLO')
 
     def on_message (self, message):
-        print 'on_message'
-        pass
+        json_msg = json.loads (message)
+        if 'msg' in json_msg:
+            if json_msg['msg'] == 'HIT':
+                on_sniffer_data ('"number": ' + str (json_msg['number']) + ', "power": 1')
+            elif json_msg['msg'] == 'READY':
+                if game:
+                    self.refresh (game.screenShot ())
 
     def on_close (self):
         clients.remove (self)
 
+    def refresh (self, game_screenshot):
+        if game:
+            game_msg = '{"msg": "GAME",' + game_screenshot + '}'
+            self.write_message (game_msg);
+
+
 # --------------------------------------------
 class IndexPageHandler (web.RequestHandler):
     def get (self):
-        self.render (args.home_page)
+        global game
+
+        self.render ('../webapp/index.html')
+
+        if game is None:
+            game = Cricket ()
 
 # --------------------------------------------
 class Application (web.Application):
     def __init__ (self):
-        handlers = [(r'/',               IndexPageHandler),
-                    (r'/scripts/(.*)',   web.StaticFileHandler, {'path': 'scripts'}),
-                    (r'/dartboard/(.*)', web.StaticFileHandler, {'path': 'scripts'}),
-                    (r'/(.*png)',        web.StaticFileHandler, {'path': 'images'}),
-                    (r'/(.*svg)',        web.StaticFileHandler, {'path': 'images'}),
-                    (r'/(.*ogg)',        web.StaticFileHandler, {'path': 'sounds'}),
-                    (r'/js/(.*)',        web.StaticFileHandler, {'path': 'js'}),
-                    (r'/websocket',      WebSocketHandler)]
+        handlers = [(r'/',          IndexPageHandler),
+                    (r'/(.*css)',   web.StaticFileHandler, {'path': '../webapp/css'}),
+                    (r'/(.*png)',   web.StaticFileHandler, {'path': '../webapp/images'}),
+                    (r'/(.*svg)',   web.StaticFileHandler, {'path': '../webapp/images'}),
+                    (r'/(.*ogg)',   web.StaticFileHandler, {'path': '../webapp/sounds'}),
+                    (r'/(.*js)',    web.StaticFileHandler, {'path': '../webapp/js'}),
+                    (r'/websocket', WebSocketHandler)]
         settings = {'template_path': '',
                     'debug':         True}
 
@@ -66,19 +84,29 @@ class Application (web.Application):
 
 # --------------------------------------------
 def on_sniffer_data (data):
-    for c in clients:
-        if args.verbose:
-            print data
-        c.write_message (data)
+    if args.verbose:
+        print data
+
+    if game:
+        msg      = '{"msg": "HIT",' + data + '}'
+        json_msg = json.loads (msg)
+
+        for c in clients:
+            c.write_message (msg)
+
+        game.onHit (json_msg['number'], json_msg['power'])
+
+        game_screenshot = game.screenShot ();
+        for c in clients:
+            c.refresh (game_screenshot)
 
 # -------------------------------------------------
 def parse_args ():
   global args
 
   parser = argparse.ArgumentParser (description='Dartboard web server')
-  parser.add_argument ('-f', '--fake',    action='store_true',                                         help='Generate fake events')
-  parser.add_argument ('-v', '--verbose', action='store_true',                                         help='Verbose')
-  parser.add_argument ('-i', '--index',   action='store',      dest='home_page', default='index.html', help='Home page')
+  parser.add_argument ('-f', '--fake',    action='store_true', help='Generate fake events')
+  parser.add_argument ('-v', '--verbose', action='store_true', help='Verbose')
 
   args = parser.parse_args ()
 
@@ -103,4 +131,4 @@ if __name__ == '__main__':
     sniffer.stop ()
 
     for c in clients:
-        c.write_message ('GOODBYE')
+        c.write_message ('{"msg": "GOODBYE"}')

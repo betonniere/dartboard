@@ -1,19 +1,30 @@
+<!-- vim: set filetype=javascript: -->
 <!DOCTYPE html>
-<html height="100%">
+<html>
   <head>
-    <meta charset="utf-8"/>
     <title>Dartboard</title>
-    <script src="scripts/framework/brython.js"></script>
-    <script src="scripts/framework/brython_stdlib.js"></script>
-    <style type="text/css">
-      body {margin: 0px;}
-      canvas {border: 2px solid grey;}
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+
+    <link rel="stylesheet" type="text/css" href="dartboard.css">
+
+    <script type="application/javascript" src="Screen.js"></script>
+    <script type="application/javascript" src="Board.js"></script>
+    <script type="application/javascript" src="Sector.js"></script>
+    <script type="application/javascript" src="GamePanel.js"></script>
+
+    <script>
+      let screen = new Screen ('canvas');
+
+      screen.connect ();
+    </script>
   </head>
 
-  <body onload="brython ({debug:1});">
-    <script type="text/python" src="scripts/dartboard.py"></script>
-    <canvas id="dartboard_canvas"></canvas>
-    <audio  id="hit_sound" src="pop.ogg"></audio>
+  <body>
+    <canvas id="canvas">
+      <p>Désolé, votre navigateur ne supporte pas Canvas. Mettez-vous à jour</p>
+    </canvas>
+
+    <audio id="hit_sound" src="pop.ogg"></audio>
   </body>
 </html>
