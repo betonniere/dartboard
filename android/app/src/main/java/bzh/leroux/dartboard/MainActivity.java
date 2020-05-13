@@ -3,21 +3,28 @@ package bzh.leroux.dartboard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import bzh.leroux.yannick.dartboard.R;
 
-public class MainActivity extends Activity {
+public class MainActivity extends    Activity
+                          implements BonjourSniffer.Listener {
 
-    private WebView mWebView;
+    private WebView        mWebView;
+    private BonjourSniffer mSniffer;
 
+    // ---------------------------------------------------
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate (savedInstanceState);
         setContentView (R.layout.activity_main);
+
+        mSniffer = new BonjourSniffer (this,
+                                       this);
 
         mWebView = findViewById (R.id.webView);
 
@@ -38,10 +45,25 @@ public class MainActivity extends Activity {
         });
     }
 
+    // ---------------------------------------------------
     @Override
     protected void onResume () {
         super.onResume ();
 
-        mWebView.loadUrl ("http://192.168.0.34:8080");
+        mSniffer.start ("_surcouf._tcp");
+    }
+
+    // ---------------------------------------------------
+    @Override
+    protected void onPause () {
+        mSniffer.stop ();
+        super.onPause ();
+    }
+
+    // ---------------------------------------------------
+    @Override
+    public void onApplicationFound (String hostAddress,
+                                    int    port) {
+        mWebView.loadUrl ("http://" + hostAddress + ":" + port);
     }
 }

@@ -25,11 +25,13 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop     import IOLoop
 
 from serial_sniffer import SerialSniffer
+from zeroconf       import ZeroconfService
 from cricket        import Cricket
 
-args    = None
-game    = None
-clients = []
+args     = None
+game     = None
+zeroconf = None
+clients  = []
 
 # --------------------------------------------
 class WebSocketHandler (websocket.WebSocketHandler):
@@ -119,6 +121,9 @@ if __name__ == '__main__':
     server = HTTPServer (app)
     server.listen (8080)
 
+    zeroconf = ZeroconfService (name="Dartboard", port=8080)
+    zeroconf.publish ()
+
     main_loop = IOLoop.instance ()
     sniffer   = SerialSniffer (main_loop, on_sniffer_data, args.fake)
 
@@ -129,6 +134,7 @@ if __name__ == '__main__':
         pass
 
     sniffer.stop ()
+    zeroconf.unpublish ()
 
     for c in clients:
         c.write_message ('{"msg": "GOODBYE"}')
