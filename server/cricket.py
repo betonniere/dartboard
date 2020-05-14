@@ -14,13 +14,20 @@
 #   You should have received a copy of the GNU General Public License
 #   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import json
 
 #----------------------------------
 class ScoreBoard:
     # ----
-    def __init__ (self):
-        self.locks = {15:3, 16:3, 17:3, 18:3, 19:3, 20:3}
+    def __init__ (self, json_scoreboard=None):
+        if json_scoreboard is None:
+            self.locks = {15:3, 16:3, 17:3, 18:3, 19:3, 20:3}
+        else:
+            self.locks = {}
+            json_locks = json_scoreboard['locks']
+            for key in json_locks:
+                self.locks[int (key)] = json_locks[key]
 
     # ----
     def removeLock (self, number, power):
@@ -41,12 +48,23 @@ class ScoreBoard:
 #----------------------------------
 class Player:
     # ----
-    def __init__ (self, name):
-        self.name       = name
-        self.darts_used = 0
-        self.score      = 0
-        self.focus      = False
-        self.scoreboard = ScoreBoard ()
+    def __init__ (self, json_player=None):
+        if json_player is None:
+            self.name       = None
+            self.darts_used = 0
+            self.score      = 0
+            self.focus      = False
+            self.scoreboard = ScoreBoard ()
+        else:
+            self.name       = json_player['name']
+            self.darts_used = json_player['darts_used']
+            self.score      = json_player['score']
+            self.focus      = json_player['focus']
+            self.scoreboard = ScoreBoard (json_player['scoreboard'])
+
+    # ----
+    def setName (self, name):
+        self.name = name
 
     # ----
     def resetVolley (self):
@@ -55,6 +73,10 @@ class Player:
     # ----
     def volleyIsDone (self):
         return self.darts_used >= 3
+
+    # ----
+    def hasFocus (self):
+        return self.focus
 
     # ----
     def setFocus (self, focus):
@@ -76,15 +98,29 @@ class Player:
 class Cricket:
     # ----
     def __init__ (self):
-        self.players = []
-        self.player_count = 2
-        for p in range (1, self.player_count+1):
-            player = Player ('P' + str (p))
-            self.addPlayer (player)
+        self.recovery_path = cwd = os.getcwd () + '/cricket.recovery'
+        self.players       = []
+        self.current       = None
+        self.iterator      = None
 
-        self.current  = None
-        self.iterator = None
-        self.startRound ()
+        if os.path.isfile (self.recovery_path):
+            with open (self.recovery_path, 'r') as recovery_file:
+                game = json.load (recovery_file)
+                for json_player in game['players']:
+                    player = Player (json_player)
+                    self.addPlayer (player)
+
+                self.iterator = iter (self.players)
+                for self.current in self.iterator:
+                    if self.current.hasFocus ():
+                        break;
+        else:
+            for p in range (0, 2):
+                player = Player ()
+                player.setName ('P' + str (p+1))
+                self.addPlayer (player)
+
+            self.startRound ()
 
     # ----
     def onHit (self, number, power):
@@ -100,8 +136,9 @@ class Cricket:
     # ----
     def startRound (self):
         self.iterator = iter (self.players)
-        self.current  = next (self.iterator)
-        self.current.setFocus (True)
+        self.current  = next (self.iterator, None)
+        if self.current:
+            self.current.setFocus (True)
 
     # ----
     def togglePlayer (self):
@@ -116,4 +153,9 @@ class Cricket:
 
     # ----
     def screenShot (self):
-        return '"players": ' + json.dumps (self.players, default=lambda o: o.__dict__, indent=4)
+        image = '"players": ' + json.dumps (self.players, default=lambda o: o.__dict__, indent=4)
+
+        with open (self.recovery_path, 'w') as recovery_file:
+            recovery_file.write ('{' + image + '}');
+
+        return image

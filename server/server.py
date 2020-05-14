@@ -27,6 +27,15 @@ from serial_sniffer import SerialSniffer
 from zeroconf       import ZeroconfService
 from cricket        import Cricket
 
+RED     ='\033[1;31m'
+GREEN   ='\033[1;32m'
+YELLOW  ='\033[1;33m'
+BLUE    ='\033[1;34m'
+MAGENTA ='\033[1;35m'
+CYAN    ='\033[1;36m'
+WHITE   ='\033[0;37m'
+END     ='\033[0m'
+
 args     = None
 game     = None
 zeroconf = None
@@ -42,6 +51,9 @@ class WebSocketHandler (websocket.WebSocketHandler):
 
     def on_message (self, message):
         global game
+
+        if args.verbose:
+            print YELLOW + message + END
 
         json_msg = json.loads (message)
         if 'msg' in json_msg:
