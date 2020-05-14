@@ -14,7 +14,8 @@
     <script type="application/javascript" src="GamePanel.js"></script>
 
     <script>
-      let screen = new Screen ('canvas');
+      let screen = new Screen ('canvas',
+                               'error');
 
       screen.connect ();
     </script>
@@ -26,5 +27,7 @@
     </canvas>
 
     <audio id="hit_sound" src="pop.ogg"></audio>
+
+    <img id='error'/>
   </body>
 </html>

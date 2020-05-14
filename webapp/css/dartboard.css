@@ -16,3 +16,19 @@ canvas {
   background: white;
   display:    block;
 }
+
+#error {
+  background-image: url("/mire.svg");
+
+  position: fixed;
+  top: 0px;
+  left: 0px;
+
+  height: 100%;
+  width: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  z-index: 1;
+}

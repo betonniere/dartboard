@@ -17,9 +17,11 @@
 class Screen
 {
   // ----
-  constructor (canvas_id)
+  constructor (canvas_id,
+               error_id)
   {
     this.canvas_id = canvas_id;
+    this.error_id  = error_id;
   }
 
   // ----
@@ -37,6 +39,9 @@ class Screen
   onConnected ()
   {
     let board_size;
+
+    this.error = document.getElementById (this.error_id);
+    this.error.style.display = 'none';
 
     this.canvas = document.getElementById (this.canvas_id);
     this.canvas.width  = window.innerWidth;
@@ -65,6 +70,7 @@ class Screen
   // ----
   onDisconnected  ()
   {
+    this.error.style.display = 'block';
   }
 
   // ----
@@ -79,7 +85,7 @@ class Screen
       }
       else if (json_msg['msg'] == 'GOODBYE')
       {
-        alert (msg.data);
+        this.error.style.display = 'block';
       }
       else if (json_msg['msg'] == 'HIT')
       {
