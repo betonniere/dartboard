@@ -1,0 +1,15 @@
+[Unit]
+Description=Dartboard game
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /home/pi/dartboard/server/server.py
+WorkingDirectory=/home/pi/dartboard/server
+User=pi
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
