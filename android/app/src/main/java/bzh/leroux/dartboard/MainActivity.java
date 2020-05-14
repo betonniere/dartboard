@@ -3,7 +3,6 @@ package bzh.leroux.dartboard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -43,6 +42,7 @@ public class MainActivity extends    Activity
             }
 
         });
+
     }
 
     // ---------------------------------------------------
@@ -50,6 +50,7 @@ public class MainActivity extends    Activity
     protected void onResume () {
         super.onResume ();
 
+        mWebView.loadUrl ("file:///android_asset/welcome.html");
         mSniffer.start ("_surcouf._tcp");
     }
 
@@ -62,8 +63,13 @@ public class MainActivity extends    Activity
 
     // ---------------------------------------------------
     @Override
-    public void onApplicationFound (String hostAddress,
-                                    int    port) {
+    public void onDartboardFound (String hostAddress,
+                                  int    port) {
         mWebView.loadUrl ("http://" + hostAddress + ":" + port);
+    }
+
+    // ---------------------------------------------------
+    @Override
+    public void onDartboardLost () {
     }
 }

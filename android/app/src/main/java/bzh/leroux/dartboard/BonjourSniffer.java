@@ -17,8 +17,9 @@ class BonjourSniffer
 
   public interface Listener
   {
-    void onApplicationFound (String hostAddress,
-                             int    port);
+    void onDartboardFound (String hostAddress,
+                           int    port);
+    void onDartboardLost ();
   }
 
   private Handler  mHandler;
@@ -110,8 +111,8 @@ class BonjourSniffer
       mHandler.post (new Runnable () {
         @Override
         public void run () {
-          mListener.onApplicationFound (hostAddress,
-                                        port);
+          mListener.onDartboardFound (hostAddress,
+                                      port);
         }
       });
     }
@@ -193,6 +194,15 @@ class BonjourSniffer
       public void onServiceLost (NsdServiceInfo serviceInfo)
       {
         Log.d (TAG, "Service lost: " + serviceInfo.getServiceName ());
+
+        if (mListener != null) {
+          mHandler.post (new Runnable () {
+            @Override
+            public void run () {
+              mListener.onDartboardLost ();
+            }
+          });
+        }
       }
     };
   }
