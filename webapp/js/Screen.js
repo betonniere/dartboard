@@ -14,14 +14,23 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
+function startGame (canvas_id,
+                    error_screen_id)
+{
+  let screen = new Screen (canvas_id,
+                           error_screen_id);
+
+  screen.connect ();
+}
+
 class Screen
 {
   // ----
   constructor (canvas_id,
-               error_id)
+               error_screen_id)
   {
-    this.canvas_id = canvas_id;
-    this.error_id  = error_id;
+    this.canvas = document.getElementById (canvas_id);
+    this.error  = document.getElementById (error_screen_id);
   }
 
   // ----
@@ -29,10 +38,10 @@ class Screen
   {
     this.socket = new WebSocket ("ws://" + document.domain + ":" + location.port + "/websocket");
 
-    let context = this;
-    this.socket.onopen    = function ()    {context.onConnected    ();};
-    this.socket.onclose   = function ()    {context.onDisconnected ();};
-    this.socket.onmessage = function (msg) {context.onMessage      (msg);};
+    let caller = this;
+    this.socket.onopen    = function ()    {caller.onConnected    ();};
+    this.socket.onclose   = function ()    {caller.onDisconnected ();};
+    this.socket.onmessage = function (msg) {caller.onMessage      (msg);};
   }
 
   // ----
@@ -40,10 +49,8 @@ class Screen
   {
     let board_size;
 
-    this.error = document.getElementById (this.error_id);
     this.error.style.display = 'none';
 
-    this.canvas = document.getElementById (this.canvas_id);
     this.canvas.width  = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
@@ -71,6 +78,7 @@ class Screen
   onDisconnected  ()
   {
     this.error.style.display = 'block';
+    this.reconnect ();
   }
 
   // ----
@@ -102,5 +110,14 @@ class Screen
         this.panel.draw (json_msg['players']);
       }
     }
+  }
+
+  // ----
+  reconnect (reason)
+  {
+    let caller = this;
+
+    //this.socket.removeAllListeners ();
+    setTimeout (function () {caller.connect ();}, 5000);
   }
 }

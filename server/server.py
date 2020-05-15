@@ -74,6 +74,7 @@ class Application (web.Application):
         handlers = [(r'/',          IndexPageHandler),
                     (r'/(.*css)',   web.StaticFileHandler, {'path': '../webapp/css'}),
                     (r'/(.*png)',   web.StaticFileHandler, {'path': '../webapp/images'}),
+                    (r'/(.*jpg)',   web.StaticFileHandler, {'path': '../webapp/images'}),
                     (r'/(.*svg)',   web.StaticFileHandler, {'path': '../webapp/images'}),
                     (r'/(.*ogg)',   web.StaticFileHandler, {'path': '../webapp/sounds'}),
                     (r'/(.*js)',    web.StaticFileHandler, {'path': '../webapp/js'}),

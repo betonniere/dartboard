@@ -12,16 +12,10 @@
     <script type="application/javascript" src="Board.js"></script>
     <script type="application/javascript" src="Sector.js"></script>
     <script type="application/javascript" src="GamePanel.js"></script>
-
-    <script>
-      let screen = new Screen ('canvas',
-                               'error');
-
-      screen.connect ();
     </script>
   </head>
 
-  <body>
+  <body onload='startGame ("canvas", "error");'>
     <canvas id="canvas">
       <p>Désolé, votre navigateur ne supporte pas Canvas. Mettez-vous à jour</p>
     </canvas>
