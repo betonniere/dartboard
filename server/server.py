@@ -41,13 +41,16 @@ class WebSocketHandler (websocket.WebSocketHandler):
         clients.append (self)
 
     def on_message (self, message):
+        global game
+
         json_msg = json.loads (message)
         if 'msg' in json_msg:
             if json_msg['msg'] == 'HIT':
                 on_sniffer_data ('"number": ' + str (json_msg['number']) + ', "power": 1')
             elif json_msg['msg'] == 'READY':
-                if game:
-                    self.refresh (game.screenShot ())
+                if game is None:
+                    game = Cricket ()
+                self.refresh (game.screenShot ())
 
     def on_close (self):
         clients.remove (self)
@@ -61,12 +64,7 @@ class WebSocketHandler (websocket.WebSocketHandler):
 # --------------------------------------------
 class IndexPageHandler (web.RequestHandler):
     def get (self):
-        global game
-
         self.render ('../webapp/index.html')
-
-        if game is None:
-            game = Cricket ()
 
 # --------------------------------------------
 class Application (web.Application):

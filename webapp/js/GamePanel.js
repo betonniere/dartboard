@@ -14,17 +14,20 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
-class GamePanel
+class GamePanel extends Panel
 {
   static nb_lock_image = 4;
   static lock_images = {};
 
   // ----
-  constructor (scratchpad, socket)
+  constructor (scratchpad, socket, listener)
   {
-    this.scratchpad = scratchpad;
-    this.socket     = socket;
+    super (scratchpad, socket, listener);
+  }
 
+  // ----
+  plug ()
+  {
     if (Object.keys (GamePanel.lock_images).length == 0)
     {
       let caller = this;
@@ -46,15 +49,8 @@ class GamePanel
 
     if (Object.keys (GamePanel.lock_images).length >= GamePanel.nb_lock_image)
     {
-      this.socket.send ('{"msg": "READY"}');
+      this.listener.onPanelReady ();
     }
-  }
-
-  // ----
-  setPosition (x, y)
-  {
-    this.x = x;
-    this.y = y;
   }
 
   // ----
@@ -63,10 +59,8 @@ class GamePanel
     let spacing_small = 7;
     let spacing_big   = 2*spacing_small;
 
-    this.scratchpad.save ();
+    this.startDrawing ();
     {
-      this.scratchpad.translate (this.x, this.y);
-
       this.scratchpad.fillStyle = 'white';
       this.scratchpad.fillRect (0, 0, 100, 100);
 
@@ -154,6 +148,6 @@ class GamePanel
         this.scratchpad.translate (0, spacing_big);
       }
     }
-    this.scratchpad.restore ();
+    this.stopDrawing ();
   }
 }

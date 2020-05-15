@@ -31,6 +31,8 @@ class Screen
   {
     this.canvas = document.getElementById (canvas_id);
     this.error  = document.getElementById (error_screen_id);
+
+    this.pending_panels = 0;
   }
 
   // ----
@@ -47,38 +49,101 @@ class Screen
   // ----
   onConnected ()
   {
-    let board_size;
+    if (!this.darts_panel)
+    {
+      let dartboard_size;
+
+      this.canvas.width  = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+
+      this.scratchpad = this.canvas.getContext ('2d');
+
+      this.darts_panel = new DartsPanel (this.scratchpad, this.socket, this);
+      this.game_panel  = new GamePanel  (this.scratchpad, this.socket, this);
+
+      if (this.canvas.width <= this.canvas.height)
+      {
+        dartboard_size = Math.min (this.canvas.width, this.canvas.height*0.5);
+
+        if (dartboard_size < this.canvas.height/2)
+        {
+          let offset = (this.canvas.height/2-dartboard_size)/2;
+
+          this.darts_panel.y = offset * 100/dartboard_size;
+          this.game_panel.y  = (this.canvas.height/2) * 100/dartboard_size;
+        }
+        else
+        {
+          this.game_panel.y = 100;
+        }
+
+        if (dartboard_size < this.canvas.width)
+        {
+          let offset = (this.canvas.width-dartboard_size)/2;
+
+          this.darts_panel.x = offset * 100/dartboard_size;
+        }
+      }
+      else
+      {
+        dartboard_size = Math.min (this.canvas.height, this.canvas.width*0.5);
+
+        if (dartboard_size < this.canvas.width/2)
+        {
+          let offset = (this.canvas.width/2-dartboard_size)/2;
+
+          this.darts_panel.x = offset * 100/dartboard_size;
+          this.game_panel.x  = (this.canvas.width/2) * 100/dartboard_size;
+        }
+        else
+        {
+          this.game_panel.x = 100;
+        }
+
+        if (dartboard_size < this.canvas.height)
+        {
+          let offset = (this.canvas.height-dartboard_size)/2;
+
+          this.darts_panel.y = offset * 100/dartboard_size;
+        }
+      }
+
+      this.scratchpad.scale (dartboard_size/100, dartboard_size/100);
+
+      this.darts_panel.plug ();
+      this.game_panel.plug  ();
+    }
+    else if (this.pending_panels == 0)
+    {
+      this.socket.send ('{"msg": "READY"}');
+    }
 
     this.error.style.display = 'none';
-
-    this.canvas.width  = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    this.scratchpad = this.canvas.getContext ('2d');
-
-    this.board = new Board     (this.scratchpad, this.socket);
-    this.panel = new GamePanel (this.scratchpad, this.socket);
-
-    if (this.canvas.width <= this.canvas.height)
-    {
-      board_size = Math.min (this.canvas.width, this.canvas.height*0.5);
-      this.panel.setPosition (0, 100);
-    }
-    else
-    {
-      board_size = Math.min (this.canvas.height, this.canvas.width*0.5);
-      this.panel.setPosition (100, 0);
-    }
-
-    this.scratchpad.scale (board_size/100, board_size/100);
-    this.board.draw ();
   }
 
   // ----
   onDisconnected  ()
   {
     this.error.style.display = 'block';
+    this.socket.close ();
     this.reconnect ();
+  }
+
+  // ----
+  onPanelCreated  (panel)
+  {
+    this.pending_panels++;
+  }
+
+  // ----
+  onPanelReady  (panel)
+  {
+    this.pending_panels--;
+
+    if (this.pending_panels == 0)
+    {
+      this.socket.send ('{"msg": "READY"}');
+    }
   }
 
   // ----
@@ -103,11 +168,11 @@ class Screen
           sound.play ();
         }
 
-        this.board.draw (json_msg['number'], json_msg['power']);
+        this.darts_panel.draw (json_msg['number'], json_msg['power']);
       }
       else if (json_msg['msg'] == 'GAME')
       {
-        this.panel.draw (json_msg['players']);
+        this.game_panel.draw (json_msg['players']);
       }
     }
   }
@@ -117,7 +182,6 @@ class Screen
   {
     let caller = this;
 
-    //this.socket.removeAllListeners ();
     setTimeout (function () {caller.connect ();}, 5000);
   }
 }

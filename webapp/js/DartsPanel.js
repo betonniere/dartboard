@@ -14,21 +14,27 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
-class Board
+class DartsPanel extends Panel
 {
   // ----
-  constructor (scratchpad, socket)
+  constructor (scratchpad, socket, listener)
   {
-    this.safe_area = 8;
+    super (scratchpad, socket, listener);
 
-    this.scratchpad = scratchpad;
-    this.socket     = socket;
+    this.safe_area = 8;
+  }
+
+  // ----
+  plug ()
+  {
+    super.plug ();
+    this.draw ();
   }
 
   // ----
   draw (focus_number, focus_power)
   {
-    this.scratchpad.save ();
+    this.startDrawing ();
     {
       this.scratchpad.translate (100/2, 100/2);
 
@@ -85,6 +91,6 @@ class Board
         sector.draw (this.scratchpad, focus_number, focus_power);
       }
     }
-    this.scratchpad.restore ();
+    this.stopDrawing ();
   }
 }
