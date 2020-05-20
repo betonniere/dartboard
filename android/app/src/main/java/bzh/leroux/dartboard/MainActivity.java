@@ -2,8 +2,10 @@ package bzh.leroux.dartboard;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -13,6 +15,7 @@ import bzh.leroux.yannick.dartboard.R;
 public class MainActivity extends    Activity
                           implements BonjourSniffer.Listener {
 
+    private View           mImageView;
     private WebView        mWebView;
     private BonjourSniffer mSniffer;
 
@@ -26,7 +29,8 @@ public class MainActivity extends    Activity
         mSniffer = new BonjourSniffer (this,
                                        this);
 
-        mWebView = findViewById (R.id.webView);
+        mImageView = findViewById (R.id.imageView);
+        mWebView   = findViewById (R.id.webView);
 
         {
             final WebSettings settings = mWebView.getSettings ();
@@ -50,6 +54,21 @@ public class MainActivity extends    Activity
     @Override
     protected void onResume () {
         super.onResume ();
+
+        {
+            ViewGroup.LayoutParams layoutParams = mImageView.getLayoutParams ();
+
+            if (getResources ().getConfiguration ().orientation == Configuration.ORIENTATION_PORTRAIT) {
+
+                layoutParams.width  = ViewGroup.LayoutParams.WRAP_CONTENT;
+                layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            } else {
+                layoutParams.width  = ViewGroup.LayoutParams.MATCH_PARENT;
+                layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            }
+
+            mImageView.setLayoutParams (layoutParams);
+        }
 
         mSniffer.start ("_surcouf._tcp");
     }

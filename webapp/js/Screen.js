@@ -44,6 +44,7 @@ class Screen
     this.socket.onopen    = function ()    {caller.onConnected    ();};
     this.socket.onclose   = function ()    {caller.onDisconnected ();};
     this.socket.onmessage = function (msg) {caller.onMessage      (msg);};
+    this.socket.onerror   = function (msg) {console.log           (msg);};
   }
 
   // ----
