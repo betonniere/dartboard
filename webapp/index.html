@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no">
 
     <link rel="stylesheet" type="text/css" href="dartboard.css">
+    <link rel="icon" type="image/svg" href="dart.svg">
 
     <script type="application/javascript" src="Panel.js"></script>
     <script type="application/javascript" src="Screen.js"></script>
@@ -21,8 +22,36 @@
       <p>Désolé, votre navigateur ne supporte pas Canvas. Mettez-vous à jour</p>
     </canvas>
 
-    <audio id="hit_sound" src="pop.ogg"></audio>
+    <div class="row">
+      <div>
+        <button type="button" class="css-button" onclick="reset()">
+          <span class="css-button-icon"></span>
+          <span class="css-button-text">
+            <span>Reset</span>
+          </span>
+        </button>
+      </div>
 
+      <div style="padding-left: 20px;">
+        <button type="button" class="css-button" onclick="addPlayer()">
+          <span class="css-button-icon"></span>
+          <span class="css-button-text">
+            <span>P+</span>
+          </span>
+        </button>
+      </div>
+
+      <div style="padding-left: 20px;">
+        <button type="button" class="css-button" onclick="removePlayer()">
+          <span class="css-button-icon"></span>
+          <span class="css-button-text">
+            <span>P-</span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <audio id="hit_sound" src="pop.ogg"></audio>
     <img id='error'/>
   </body>
 </html>

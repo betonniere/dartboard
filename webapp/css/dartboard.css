@@ -9,12 +9,50 @@ html, body {
 }
 
 body {
-  background: black;
+  background: #800000;
 }
 
 canvas {
-  background: white;
-  display:    block;
+  display: block;
+  height:  90%;
+}
+
+.row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 2%
+}
+
+.css-button {
+  color: #333333;
+  font-size: 16px;
+  border-radius: 5px;
+  border: solid 1px #ffaa22;
+  text-shadow: 1px 1px 0px #ffed66;
+  box-shadow: inset 1px 1px 2px 0px #fff6af;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font-family: Arial;
+  background: linear-gradient(180deg, #ffed64 10%, #ffab23 100%);
+  display: inline-flex;
+  align-items: center;
+}
+.css-button:hover {
+  background: linear-gradient(180deg, #ffab23 10%, #ffed64 100%);
+}
+.css-button-text {
+  position: relative;
+  padding: 10px 18px;
+}
+.css-button-icon {
+  position: relative;
+  border-right: 1px solid #ffffff29;
+  box-shadow: inset rgb(0 0 0 / 14%) -1px 0 0;
+  padding: 10px 10px;
 }
 
 #error {

@@ -102,6 +102,7 @@ class BigSector extends Sector
     }
     catch (e)
     {
+      // console.trace(e);
     }
   }
 }
@@ -121,7 +122,7 @@ class SmallSector extends Sector
 
     this.width = width;
 
-    if (this.power == 2)
+    if (this.power == 3)
     {
       this.radius = (50-safe_area)/2 + (this.width/2);
     }
@@ -158,6 +159,15 @@ class BullSector extends Sector
            '#d82121',
            '#229d23',
            power);
+
+    if (this.power%2 == 0)
+    {
+      this.rest_color = '#d82121';
+    }
+    else
+    {
+      this.rest_color = '#229d23';
+    }
 
     if (this.power == 1)
     {
