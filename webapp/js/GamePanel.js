@@ -16,8 +16,11 @@
 
 class GamePanel extends Panel
 {
-  static nb_lock_image = 4;
+  static nb_lock_images = 4;
   static lock_images = {};
+  static images = {'dart': null, 'podium': null};
+
+  static images_to_load = 0;
 
   // ----
   constructor (scratchpad, socket, listener)
@@ -32,121 +35,191 @@ class GamePanel extends Panel
     {
       let caller = this;
 
-      for (let i = 0; i < GamePanel.nb_lock_image; i++)
+      GamePanel.images_to_load = Object.keys(GamePanel.images).length + GamePanel.nb_lock_images;
+
+      for (const i in GamePanel.images)
       {
         let image = new Image ();
 
-        image.onload = function () {caller.onImageloaded (i, image)};
+        image.src    = i + '.svg';
+        image.onload = function () {GamePanel.images[i] = image; caller.onImageloaded (image)};
+      }
+
+      for (let i = 0; i < GamePanel.nb_lock_images; i++)
+      {
+        let image = new Image ();
+
         image.src    =  i + '.svg';
+        image.onload = function () {GamePanel.lock_images[i] = image; caller.onImageloaded (image)};
       }
     }
   }
 
   // ----
-  onImageloaded (index, image)
+  onImageloaded (image)
   {
-    GamePanel.lock_images[index] = image;
-
-    if (Object.keys (GamePanel.lock_images).length >= GamePanel.nb_lock_image)
+    GamePanel.images_to_load--;
+    if (GamePanel.images_to_load == 0)
     {
       this.listener.onPanelReady ();
     }
   }
 
   // ----
-  draw (players)
+  draw (data)
   {
     let spacing_small = 7;
     let spacing_big   = 2*spacing_small;
+    let thrower       = null;
 
     this.startDrawing ();
     {
-      this.scratchpad.fillStyle = 'white';
+      let players;
+      let game_over = (data['players'].length == 0) && (data['rankings'].length > 0);
+
+      this.scratchpad.fillStyle = '#800000';
       this.scratchpad.fillRect (0, 0, 100, 100);
 
       this.scratchpad.translate (spacing_small, spacing_small);
 
-      // Header
-      this.scratchpad.save ();
+      if (game_over)
       {
-        this.scratchpad.translate (spacing_small, 0);
-        this.scratchpad.translate (spacing_small, 0);
-
-        for (let lock in players[1].scoreboard.locks)
-        {
-          this.scratchpad.font         = 'bold 3pt sans-serif';
-          this.scratchpad.fillStyle    = 'darkblue';
-          this.scratchpad.textAlign    = 'center';
-          this.scratchpad.textBaseline = 'middle';
-
-          this.scratchpad.fillText (lock,
-                                    0,
-                                    0);
-          this.scratchpad.translate (spacing_small, 0);
-        }
-
+        players = data['rankings'].reverse();
       }
-      this.scratchpad.restore ();
-
-      this.scratchpad.translate (0, spacing_small);
-      for (let p in players)
+      else
       {
-        let player = players[p];
+        players = data['players'];
 
-        if (player['focus'] == true)
-        {
-          this.scratchpad.save ();
-          this.scratchpad.fillStyle = 'lightgrey';
-          this.scratchpad.fillRect (-spacing_small, -spacing_small*0.6, 100, spacing_small);
-          this.scratchpad.restore ();
-        }
-
+        // Header
         this.scratchpad.save ();
         {
-          {
-            this.scratchpad.font         = 'bold 5px sans-serif';
-            this.scratchpad.fillStyle    = 'black';
-            this.scratchpad.textAlign    = 'center';
-            this.scratchpad.textBaseline = 'middle';
-            this.scratchpad.fillText (player.name,
-                                      0,
-                                      0);
-          }
-
+          this.scratchpad.translate (spacing_small, 0);
           this.scratchpad.translate (spacing_small, 0);
 
-          for (let l in player.scoreboard.locks)
+          for (let lock in players[0].scoreboard.locks)
           {
-            let scored = player.scoreboard.locks[l];
+            this.scratchpad.font         = 'bold 3pt sans-serif';
+            this.scratchpad.fillStyle    = 'lightgrey';
+            this.scratchpad.textAlign    = 'center';
+            this.scratchpad.textBaseline = 'middle';
 
+            if (lock == 25)
+            {
+              lock = 'B'
+            }
+            this.scratchpad.fillText (lock,
+                                      0,
+                                      0);
             this.scratchpad.translate (spacing_small, 0);
+          }
+
+        }
+        this.scratchpad.restore ();
+      }
+
+      // Players
+      this.scratchpad.translate (0, spacing_small);
+      for (let p = 0; p < 8; p++)
+      {
+        if (p < players.length)
+        {
+          let player = players[p];
+
+          if (!game_over && (player['thrower'] == true))
+          {
+            thrower = player;
 
             this.scratchpad.save ();
-            {
-              this.scratchpad.drawImage (GamePanel.lock_images[scored],
-                                         -spacing_small/4,
-                                         -spacing_small/4,
-                                         spacing_small/2,
-                                         spacing_small/2);
-            }
+            this.scratchpad.fillStyle = 'black';
+            this.scratchpad.fillRect (-spacing_small, -spacing_small*0.6, 100, spacing_small);
             this.scratchpad.restore ();
           }
 
-          this.scratchpad.translate (spacing_small, 0);
-          this.scratchpad.translate (spacing_small, 0);
-          this.scratchpad.translate (spacing_small, 0);
-
+          this.scratchpad.save ();
           {
-            this.scratchpad.font = 'bold 7px sans-serif';
-            this.scratchpad.fillText (player.score,
-                                      0,
-                                      0);
+            {
+              this.scratchpad.font         = 'bold 5px sans-serif';
+              this.scratchpad.fillStyle    = 'darkgrey';
+              this.scratchpad.textAlign    = 'center';
+              this.scratchpad.textBaseline = 'middle';
+              this.scratchpad.fillText (player.name,
+                                        0,
+                                        0);
+            }
+
+            if (!game_over)
+            {
+              this.scratchpad.translate (spacing_small, 0);
+
+              for (let l in player.scoreboard.locks)
+              {
+                let scored = player.scoreboard.locks[l];
+
+                this.scratchpad.translate (spacing_small, 0);
+
+                this.scratchpad.save ();
+                {
+                  this.scratchpad.drawImage (GamePanel.lock_images[scored],
+                                             -spacing_small/4,
+                                             -spacing_small/4,
+                                             spacing_small/2,
+                                             spacing_small/2);
+                }
+                this.scratchpad.restore ();
+              }
+            }
+
+            this.scratchpad.translate (spacing_small, 0);
+            this.scratchpad.translate (spacing_small, 0);
+            this.scratchpad.translate (spacing_small, 0);
+
+            {
+              this.scratchpad.font = 'bold 5px sans-serif';
+              this.scratchpad.fillText (player.score,
+                                        0,
+                                        0);
+            }
           }
+          this.scratchpad.restore ();
+        }
+        this.scratchpad.translate (0, spacing_small);
+      }
+
+      this.scratchpad.translate (spacing_small, spacing_small);
+
+      if (game_over)
+      {
+        this.scratchpad.drawImage (GamePanel.images['podium'],
+                                   spacing_big,
+                                   -spacing_big,
+                                   spacing_big*2.5,
+                                   spacing_big*2.5);
+      }
+      else if (thrower)
+      {
+        this.scratchpad.save ();
+        this.scratchpad.translate (0, spacing_small/4);
+
+        for (let i = 3 - thrower['darts_used']; i > 0; i--)
+        {
+          this.scratchpad.translate (spacing_big, 0);
+          this.scratchpad.drawImage (GamePanel.images['dart'],
+                                     0,
+                                     0,
+                                     spacing_big,
+                                     spacing_big);
         }
         this.scratchpad.restore ();
 
-        this.scratchpad.translate (0, spacing_big);
+        this.scratchpad.translate (6*spacing_big, spacing_big);
+        this.scratchpad.font = 'bold 10pt sans-serif';
+        this.scratchpad.textAlign = 'right';
+        this.scratchpad.fillStyle = 'black';
+        this.scratchpad.fillText (data['rounds_to_go'],
+                                  0,
+                                  0);
       }
+
     }
     this.stopDrawing ();
   }

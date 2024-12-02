@@ -17,70 +17,77 @@
 
 import argparse
 import json
+import rich
+import subprocess
 
-import tornado.web       as web
+import tornado.web as web
 import tornado.websocket as websocket
 from tornado.httpserver import HTTPServer
-from tornado.ioloop     import IOLoop
+from tornado.ioloop import IOLoop
 
 from serial_sniffer import SerialSniffer
-from zeroconf       import ZeroconfService
-from cricket        import Cricket
-
-RED     ='\033[1;31m'
-GREEN   ='\033[1;32m'
-YELLOW  ='\033[1;33m'
-BLUE    ='\033[1;34m'
-MAGENTA ='\033[1;35m'
-CYAN    ='\033[1;36m'
-WHITE   ='\033[0;37m'
-END     ='\033[0m'
+from zeroconf import ZeroconfService
+from cricket import Cricket
 
 args     = None
 game     = None
 zeroconf = None
+idle     = None
 clients  = []
 
-# --------------------------------------------
-class WebSocketHandler (websocket.WebSocketHandler):
-    def check_origin (self, origin):
+
+# ----------------------------------
+class WebSocketHandler(websocket.WebSocketHandler):
+    # ----
+    def check_origin(self, origin):
         return True
 
-    def open (self):
-        clients.append (self)
+    # ----
+    def open(self):
+        clients.append(self)
 
-    def on_message (self, message):
+    # ----
+    def on_message(self, message):
         global game
 
+        message = json.loads(message)
         if args.verbose:
-            print YELLOW + message + END
+            rich.print(message)
 
-        json_msg = json.loads (message)
-        if 'msg' in json_msg:
-            if json_msg['msg'] == 'HIT':
-                on_sniffer_data ('"number": ' + str (json_msg['number']) + ', "power": 1')
-            elif json_msg['msg'] == 'READY':
+        if 'name' in message:
+            if message['name'] == 'HIT':
+                on_sniffer_data(message)
+            elif message['name'] == 'READY':
                 if game is None:
-                    game = Cricket ()
-                self.refresh (game.screenShot ())
+                    game = Cricket()
+                self.refresh(game.screenshot(), [self])
+            elif game:
+                if game.on_message(message):
+                    self.refresh(game.screenshot(), clients)
 
-    def on_close (self):
-        clients.remove (self)
+    # ----
+    def on_close(self):
+        clients.remove(self)
 
-    def refresh (self, game_screenshot):
+    # ----
+    def refresh(self, game_screenshot, sockets):
         if game:
-            game_msg = '{"msg": "GAME",' + game_screenshot + '}'
-            self.write_message (game_msg);
+            game_msg = '{"name": "GAME", "data": ' + game_screenshot + '}'
+            for s in sockets:
+                s.write_message(game_msg)
 
 
-# --------------------------------------------
-class IndexPageHandler (web.RequestHandler):
-    def get (self):
-        self.render ('../webapp/index.html')
+# ----------------------------------
+class IndexPageHandler(web.RequestHandler):
+    # ----
+    def get(self):
+        self.render('../webapp/index.html')
 
-# --------------------------------------------
-class Application (web.Application):
-    def __init__ (self):
+
+# ----------------------------------
+class Application(web.Application):
+    # ----
+    def __init__(self):
         handlers = [(r'/',          IndexPageHandler),
                     (r'/(.*css)',   web.StaticFileHandler, {'path': '../webapp/css'}),
                     (r'/(.*png)',   web.StaticFileHandler, {'path': '../webapp/images'}),
@@ -92,59 +99,91 @@ class Application (web.Application):
         settings = {'template_path': '',
                     'debug':         True}
 
-        web.Application.__init__ (self, handlers, **settings)
+        web.Application.__init__(self, handlers, **settings)
+
 
 # --------------------------------------------
-def on_sniffer_data (data):
+def on_idle():
+    message = {'name': 'IDLE'}
+    for c in clients:
+        c.write_message(message)
+
+
+# --------------------------------------------
+def on_sniffer_data(data, spawner=None):
+    global idle
+
+    if spawner:
+        spawner.spawn_callback(on_sniffer_data, data, None)
+        return
+
     if args.verbose:
-        print data
+        rich.print(data)
 
     if game:
-        msg      = '{"msg": "HIT",' + data + '}'
-        json_msg = json.loads (msg)
+        if idle:
+            IOLoop.current().remove_timeout(idle)
+            idle = None
+
+        message = {'name': 'HIT', 'data': data}
 
         for c in clients:
-            c.write_message (msg)
+            c.write_message(json.dumps(message))
 
-        game.onHit (json_msg['number'], json_msg['power'])
+        game.on_hit(message['data']['number'], message['data']['power'])
+        idle = IOLoop.current().call_later(delay=3, callback=on_idle)
 
-        game_screenshot = game.screenShot ();
+        game_screenshot = game.screenshot()
         for c in clients:
-            c.refresh (game_screenshot)
+            c.refresh(game_screenshot, clients)
+
 
 # -------------------------------------------------
-def parse_args ():
-  global args
+def parse_args():
+    global args
 
-  parser = argparse.ArgumentParser (description='Dartboard web server')
-  parser.add_argument ('-f', '--fake',    action='store_true', help='Generate fake events')
-  parser.add_argument ('-v', '--verbose', action='store_true', help='Verbose')
+    parser = argparse.ArgumentParser(description='Dartboard web server')
+    parser.add_argument('-f', '--fake',    action='store_true', help='Generate fake events')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
 
-  args = parser.parse_args ()
+    args = parser.parse_args()
+
+
+# -------------------------------------------------
+def fetch_upgrade():
+    result = subprocess.run(['git', 'remote', 'get-url', 'origin'], capture_output=True, text=True)
+    if result.stdout and result.stdout.startswith('https://'):
+        result = subprocess.run(['git', 'pull'], capture_output=True, text=True)
+        if args.verbose:
+            rich.print(result.stdout)
+            rich.print(result.stderr)
+
 
 # --------------------------------------------
 if __name__ == '__main__':
-    parse_args ()
+    parse_args()
 
-    app = Application ()
+    fetch_upgrade()
 
-    server = HTTPServer (app)
-    server.listen (8080)
+    app = Application()
 
-    zeroconf = ZeroconfService (name="Dartboard", port=8080)
-    zeroconf.publish ()
+    server = HTTPServer(app)
+    server.listen(8080)
 
-    main_loop = IOLoop.instance ()
-    sniffer   = SerialSniffer (main_loop, on_sniffer_data, args.fake)
+    zeroconf = ZeroconfService(name="Dartboard", port=8080)
+    zeroconf.publish()
+
+    main_loop = IOLoop.instance()
+    sniffer   = SerialSniffer(on_sniffer_data, main_loop, args.fake)
 
     try:
-        sniffer.start ()
-        main_loop.start ()
+        sniffer.start()
+        main_loop.start()
     except KeyboardInterrupt:
         pass
 
-    sniffer.stop ()
-    zeroconf.unpublish ()
+    sniffer.stop()
+    zeroconf.unpublish()
 
     for c in clients:
-        c.write_message ('{"msg": "GOODBYE"}')
+        c.write_message('{"name": "GOODBYE"}')

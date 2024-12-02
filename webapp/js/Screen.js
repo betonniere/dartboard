@@ -14,13 +14,30 @@
 //   You should have received a copy of the GNU General Public License
 //   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
+let screen;
+
 function startGame (canvas_id,
                     error_screen_id)
 {
-  let screen = new Screen (canvas_id,
-                           error_screen_id);
+  screen = new Screen (canvas_id,
+                       error_screen_id);
 
   screen.connect ();
+}
+
+function reset ()
+{
+  screen.reset ();
+}
+
+function addPlayer ()
+{
+  screen.addPlayer ();
+}
+
+function removePlayer ()
+{
+  screen.removePlayer ();
 }
 
 class Screen
@@ -33,6 +50,24 @@ class Screen
     this.error  = document.getElementById (error_screen_id);
 
     this.pending_panels = 0;
+  }
+
+  // ----
+  reset ()
+  {
+    this.socket.send ('{"name": "RESET"}');
+  }
+
+  // ----
+  addPlayer ()
+  {
+    this.socket.send ('{"name": "ADD_PLAYER"}');
+  }
+
+  // ----
+  removePlayer ()
+  {
+    this.socket.send ('{"name": "REMOVE_PLAYER"}');
   }
 
   // ----
@@ -116,7 +151,7 @@ class Screen
     }
     else if (this.pending_panels == 0)
     {
-      this.socket.send ('{"msg": "READY"}');
+      this.socket.send ('{"name": "READY"}');
     }
 
     this.error.style.display = 'none';
@@ -143,7 +178,7 @@ class Screen
 
     if (this.pending_panels == 0)
     {
-      this.socket.send ('{"msg": "READY"}');
+      this.socket.send ('{"name": "READY"}');
     }
   }
 
@@ -152,16 +187,16 @@ class Screen
   {
     let json_msg = JSON.parse (msg.data);
 
-    if (json_msg.hasOwnProperty ('msg'))
+    if (json_msg.hasOwnProperty ('name'))
     {
-      if (json_msg['msg'] == 'HELLO')
+      if (json_msg['name'] == 'HELLO')
       {
       }
-      else if (json_msg['msg'] == 'GOODBYE')
+      else if (json_msg['name'] == 'GOODBYE')
       {
         this.error.style.display = 'block';
       }
-      else if (json_msg['msg'] == 'HIT')
+      else if (json_msg['name'] == 'HIT')
       {
         {
           let sound = document.getElementById ('hit_sound');
@@ -169,11 +204,15 @@ class Screen
           sound.play ();
         }
 
-        this.darts_panel.draw (json_msg['number'], json_msg['power']);
+        this.darts_panel.draw (json_msg['data']['number'], json_msg['data']['power']);
       }
-      else if (json_msg['msg'] == 'GAME')
+      else if (json_msg['name'] == 'IDLE')
       {
-        this.game_panel.draw (json_msg['players']);
+        this.darts_panel.draw (null, null);
+      }
+      else if (json_msg['name'] == 'GAME')
+      {
+        this.game_panel.draw (json_msg['data']);
       }
     }
   }

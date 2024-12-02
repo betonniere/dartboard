@@ -14,148 +14,273 @@
 #   You should have received a copy of the GNU General Public License
 #   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import json
+import os
 
-#----------------------------------
+
+# ----------------------------------
 class ScoreBoard:
     # ----
-    def __init__ (self, json_scoreboard=None):
+    def __init__(self, json_scoreboard=None):
         if json_scoreboard is None:
-            self.locks = {15:3, 16:3, 17:3, 18:3, 19:3, 20:3}
+            self.locks = {15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3, 25: 3}
         else:
             self.locks = {}
             json_locks = json_scoreboard['locks']
             for key in json_locks:
-                self.locks[int (key)] = json_locks[key]
+                self.locks[int(key)] = json_locks[key]
 
     # ----
-    def removeLock (self, number, power):
-        score = 0
+    def record_points(self, number, power):
+        points = 0
         if number in self.locks:
-            for i in range (0, power):
+            for i in range(0, power):
                 if self.locks[number] > 0:
                     self.locks[number] -= 1
                 else:
-                    score += 1
+                    points += 1
 
-        return score
+        return points
 
     # ----
-    def isLockedFor (self, number):
+    def number_closed(self, number):
         return self.locks[number] > 0
 
-#----------------------------------
+    # ----
+    def completed(self):
+        for lock in self.locks.values():
+            if lock > 0:
+                return False
+
+        return True
+
+
+# ----------------------------------
 class Player:
     # ----
-    def __init__ (self, json_player=None):
-        if json_player is None:
-            self.name       = None
-            self.darts_used = 0
-            self.score      = 0
-            self.focus      = False
-            self.scoreboard = ScoreBoard ()
-        else:
+    def __init__(self, json_player=None):
+        if json_player:
             self.name       = json_player['name']
             self.darts_used = json_player['darts_used']
             self.score      = json_player['score']
-            self.focus      = json_player['focus']
-            self.scoreboard = ScoreBoard (json_player['scoreboard'])
+            self.thrower    = json_player['thrower']
+            self.scoreboard = ScoreBoard(json_player['scoreboard'])
+        else:
+            self.name = None
+            self.reset()
 
     # ----
-    def setName (self, name):
+    def reset(self):
+        self.darts_used = 0
+        self.score      = 0
+        self.thrower    = False
+        self.scoreboard = ScoreBoard()
+
+    # ----
+    def set_name(self, name):
         self.name = name
 
     # ----
-    def resetVolley (self):
-        self.darts_used = 0
-
-    # ----
-    def volleyIsDone (self):
+    def out_of_darts(self):
         return self.darts_used >= 3
 
     # ----
-    def hasFocus (self):
-        return self.focus
+    def release_dartboard(self):
+        self.thrower = False
 
     # ----
-    def setFocus (self, focus):
-        self.focus = focus
+    def reserve_dartboard(self):
+        self.darts_used = 0
+        self.thrower = True
 
     # ----
-    def onHit (self, number, power, competitors):
-        if not self.volleyIsDone ():
-            scored = self.scoreboard.removeLock (number, power)
-            self.darts_used += 1
+    def on_hit(self, number, power, competitors):
+        points = self.scoreboard.record_points(number, power)
+        self.darts_used += 1
 
-            if scored > 0:
-                for c in competitors:
-                    if (c is not self) and (c.scoreboard.isLockedFor (number)):
-                        self.score += number*scored
-                        break
+        if points > 0:
+            for c in competitors:
+                if (c is not self) and (c.scoreboard.number_closed(number)):
+                    self.score += number * points
+                    break
 
-#----------------------------------
+    # ----
+    def game_achieved(self, competitors):
+        if (self.scoreboard.completed()):
+            for c in competitors:
+                if (c is not self) and (self.score <= c.score):
+                    return False
+            return True
+
+        return False
+
+
+# ----------------------------------
 class Cricket:
     # ----
-    def __init__ (self):
-        self.recovery_path = cwd = os.getcwd () + '/cricket.recovery'
-        self.players       = []
-        self.current       = None
-        self.iterator      = None
+    def __init__(self):
+        self.recovery_path = os.getcwd() + '/games/cricket.json'
+        self.players      = []
+        self.rankings     = []
+        self.current      = None
+        self.iterator     = None
+        self.rounds_to_go = 0
 
-        if os.path.isfile (self.recovery_path):
-            with open (self.recovery_path, 'r') as recovery_file:
-                game = json.load (recovery_file)
-                for json_player in game['players']:
-                    player = Player (json_player)
-                    self.addPlayer (player)
+        if os.path.isfile(self.recovery_path):
+            with open(self.recovery_path, 'r') as recovery_file:
+                game = json.load(recovery_file)
 
-                self.iterator = iter (self.players)
+                try:
+                    self.rounds_to_go = game['rounds_to_go']
+                    for json_player in game['players']:
+                        player = Player(json_player)
+                        self.players.append(player)
+                    for json_player in game['rankings']:
+                        player = Player(json_player)
+                        self.rankings.append(player)
+                except:
+                    self.create_default()
+                    return
+
+                self.iterator = iter(self.players)
                 for self.current in self.iterator:
-                    if self.current.hasFocus ():
-                        break;
+                    if self.current.thrower:
+                        break
         else:
-            for p in range (0, 2):
-                player = Player ()
-                player.setName ('P' + str (p+1))
-                self.addPlayer (player)
-
-            self.startRound ()
+            self.create_default()
 
     # ----
-    def onHit (self, number, power):
-        self.current.onHit (number, power, self.players)
+    def create_default(self):
+        for p in range(0, 2):
+            self.add_player()
 
-        if self.current.volleyIsDone ():
-            self.togglePlayer ()
-
-    # ----
-    def addPlayer (self, player):
-        self.players.append (player)
+        self.reset()
 
     # ----
-    def startRound (self):
-        self.iterator = iter (self.players)
-        self.current  = next (self.iterator, None)
+    def on_hit(self, number, power):
         if self.current:
-            self.current.setFocus (True)
+            player = self.current
+
+            player.on_hit(number, power, self.players)
+
+            if player.game_achieved(self.players):
+                next_player = self.toggle_player()
+                self.give_rank(player)
+
+                if len(self.players) == 1:
+                    self.give_rank(next_player)
+                else:
+                    self.start_round(next_player)
+            elif player.out_of_darts():
+                self.toggle_player()
 
     # ----
-    def togglePlayer (self):
+    def give_rank(self, player):
+        self.rankings.append(player)
+        self.players.remove(player)
+
+    # ----
+    def started(self):
+        if len(self.players) == 0:
+            return False
+        elif self.rounds_to_go < 20:
+            return True
+        if self.current != self.players[0]:
+            return True
+        if self.current.darts_used > 0:
+            return True
+
+        return False
+
+    # ----
+    def add_player(self, player=None):
+        if self.started():
+            return False
+
+        if len(self.players) >= 0 and len(self.players) < 8:
+            if player is None:
+                player = Player()
+                player.set_name('P' + str(len(self.players) + 1))
+            self.players.append(player)
+            return True
+
+        return False
+
+    # ----
+    def remove_player(self):
+        if self.started():
+            return False
+
+        if len(self.players) > 1:
+            self.players.pop()
+            return True
+
+        return False
+
+    # ----
+    def start_round(self, at=None):
+        if self.rounds_to_go == 0:
+            self.players = sorted(self.players, key=lambda player: player.score)
+            while len(self.players) > 0:
+                self.give_rank(self.players[0])
+        else:
+            self.iterator = iter(self.players)
+            self.current  = next(self.iterator, None)
+            if self.current:
+                if at:
+                    while self.current != at:
+                        self.current = next(self.iterator)
+
+                self.current.reserve_dartboard()
+
+    # ----
+    def toggle_player(self):
         try:
-            self.current.resetVolley ()
-            self.current.setFocus (False)
+            self.current.release_dartboard()
 
-            self.current = next (self.iterator)
-            self.current.setFocus (True)
+            self.current = next(self.iterator)
+            self.current.reserve_dartboard()
         except StopIteration:
-            self.startRound ()
+            self.rounds_to_go -= 1
+            self.start_round()
+
+        return self.current
 
     # ----
-    def screenShot (self):
-        image = '"players": ' + json.dumps (self.players, default=lambda o: o.__dict__, indent=4)
+    def screenshot(self):
+        players = json.dumps(self.players, default=lambda o: o.__dict__, indent=4)
+        rankings = json.dumps(self.rankings, default=lambda o: o.__dict__, indent=4)
+        image  = '{\n'
+        image += '"rounds_to_go": ' + str(self.rounds_to_go) + ',\n'
+        image += '"players": ' + players + ',\n'
+        image += '"rankings": ' + rankings + '\n'
+        image += '}'
 
-        with open (self.recovery_path, 'w') as recovery_file:
-            recovery_file.write ('{' + image + '}');
+        with open(self.recovery_path, 'w') as recovery_file:
+            recovery_file.write(image)
 
         return image
+
+    # ----
+    def reset(self):
+        self.rounds_to_go = 20
+        self.players = self.players + self.rankings
+        self.players = sorted(self.players, key=lambda player: player.name)
+        self.rankings = []
+
+        for player in self.players:
+            player.reset()
+
+        self.start_round()
+
+    # ----
+    def on_message(self, msg):
+        if msg['name'] == 'RESET':
+            self.reset()
+            return True
+        elif msg['name'] == 'ADD_PLAYER':
+            return self.add_player()
+        elif msg['name'] == 'REMOVE_PLAYER':
+            return self.remove_player()
+
+        return False
