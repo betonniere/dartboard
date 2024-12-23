@@ -26,7 +26,7 @@ import time
 # ----------------------------------
 class SerialSniffer(threading.Thread):
     # ----
-    def __init__(self, on_sniffer_data, context, fake):
+    def __init__(self, on_sniffer_data, context, fake, device):
         if fake:
             threading.Thread.__init__(self, target=self.fake_looper)
         else:
@@ -35,6 +35,7 @@ class SerialSniffer(threading.Thread):
         self.sniffer_queue   = queue.Queue()
         self.context         = context
         self.on_sniffer_data = on_sniffer_data
+        self.device          = device
 
     # ----
     def stop(self):
@@ -62,7 +63,7 @@ class SerialSniffer(threading.Thread):
     # ----
     def looper(self):
         try:
-            self.sp = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+            self.sp = serial.Serial('/dev/' + self.device, 115200, timeout=1)
         except serial.SerialException as e:
             rich.print(e)
             return
