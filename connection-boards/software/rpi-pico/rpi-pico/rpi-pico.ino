@@ -123,6 +123,8 @@ void setup ()
       }
    }
 
+   pinMode(LED_BUILTIN, OUTPUT);
+
    Serial1.println (GREEN "Dartboard OK!" WHITE);
 }
 
@@ -134,6 +136,12 @@ void loop ()
    if (key != 0)
    {
       Serial1.println (key);
+      digitalWrite (LED_BUILTIN, HIGH);
+   }
+   else
+   {
+      Serial1.println (YELLOW "Failed" WHITE);
+      digitalWrite (LED_BUILTIN, LOW);
    }
 }
 
