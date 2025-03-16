@@ -1,0 +1,17 @@
+CMakeCache.txt
+CMakeDoxyfile.in
+CMakeDoxygenDefaults.cmake
+CMakeFiles/
+Makefile
+cmake_install.cmake
+compile_commands.json
+generated/
+pico-sdk/
+pico_flash_region.ld
+
+*.bin
+*.dis
+*.elf
+*.elf.map
+*.hex
+*.uf2

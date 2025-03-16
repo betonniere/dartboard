@@ -96,63 +96,46 @@ int ratings_count = sizeof(rating_pins)/sizeof(rating_pins[0]);
 #define WHITE   "\033[0m"
 
 // -------------------------------------
-void setup ()
+void setup()
 {
    Serial1.begin (115200);
 
-   // PIN configuration
-   for (int v = 0; v < numbers_count; v++)
+   pinMode(LED_BUILTIN, OUTPUT);
+
+   // OUTPUT
+   for (int n = 0; n < numbers_count; n++)
    {
-      NumberPin *number_pin = &number_pins[v];
+      NumberPin *number_pin = &number_pins[n];
 
       if (number_pin->connector != 0)
       {
-         pinMode      (number_pin->connector, OUTPUT);
-         digitalWrite (number_pin->connector, HIGH);
+         pinMode(number_pin->connector, OUTPUT);
+         digitalWrite(number_pin->connector, HIGH);
       }
    }
 
+   // INPUT
    for (int r = 0; r < ratings_count; r++)
    {
       RatingPin *rating_pin = &rating_pins[r];
 
       if (rating_pin->connector != 0)
       {
-         pinMode      (rating_pin->connector, INPUT);
-         digitalWrite (rating_pin->connector, HIGH);
+         pinMode(rating_pin->connector, INPUT);
       }
    }
 
-   pinMode(LED_BUILTIN, OUTPUT);
-
-   Serial1.println (GREEN "Dartboard OK!" WHITE);
+   digitalWrite (LED_BUILTIN, LOW);
+   blink();
+   Serial1.println(GREEN "Dartboard OK! <1>" WHITE);
 }
 
 // -------------------------------------
 void loop ()
 {
-   char key = getKey ();
-
-   if (key != 0)
+   for (int n = 0; n < numbers_count; n++)
    {
-      Serial1.println (key);
-      digitalWrite (LED_BUILTIN, HIGH);
-   }
-   else
-   {
-      Serial1.println (YELLOW "Failed" WHITE);
-      digitalWrite (LED_BUILTIN, LOW);
-   }
-}
-
-// -------------------------------------
-char getKey ()
-{
-   char key = 0;
-
-   for (int v = 0; v < numbers_count; v++)
-   {
-      NumberPin *number_pin = &number_pins[v];
+      NumberPin *number_pin = &number_pins[n];
 
       if (number_pin->connector != 0)
       {
@@ -166,6 +149,7 @@ char getKey ()
             {
                delay (debounceTime);
 
+               blink();
                while (digitalRead (rating_pin->connector) == LOW)
                {
                   // Wait for key to be released
@@ -184,21 +168,30 @@ char getKey ()
                   Serial1.println (rating_pin->value);
                }
             }
+            else
+            {
+               blink();
+
+               Serial1.print (number_pin->value[rating_pin->sector]);
+               Serial1.print ("X");
+               Serial1.println (rating_pin->value);
+            }
          }
 
          digitalWrite (number_pin->connector, HIGH);
       }
    }
-
-   return key;
 }
 
 // -------------------------------------
 void blink ()
 {
-   digitalWrite (LED_BUILTIN, HIGH);
-   delay (1000);
+   for (int i = 0; i < 10; i++)
+   {
+      digitalWrite (LED_BUILTIN, LOW);
+      delay (100);
 
-   digitalWrite (LED_BUILTIN, LOW);
-   delay (1000);
+      digitalWrite (LED_BUILTIN, HIGH);
+      delay (100);
+   }
 }
