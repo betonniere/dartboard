@@ -61,9 +61,8 @@ class WebSocketHandler(websocket.WebSocketHandler):
                 if game is None:
                     game = Cricket()
                 self.refresh(game.screenshot(), [self])
-            elif game:
-                if game.on_message(message):
-                    self.refresh(game.screenshot(), clients)
+            elif game and game.on_message(message):
+                self.refresh(game.screenshot(), clients)
 
     # ----
     def on_close(self):
