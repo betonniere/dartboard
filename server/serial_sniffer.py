@@ -70,7 +70,8 @@ class SerialSniffer(threading.Thread):
 
         self.sp.flushInput()
 
-        pattern = re.compile(r'^(?P<NUMBER>(\d{1,2}))X(?P<RATING>(\d))$')
+        hit_pattern = re.compile(r'^(?P<NUMBER>(\d{1,2}))X(?P<RATING>(\d))$')
+        function_pattern = re.compile(r'^F(?P<NUMBER>(\d{1,2}))$')
 
         while True:
             if not self.sniffer_queue.empty():
@@ -82,6 +83,13 @@ class SerialSniffer(threading.Thread):
             msg = self.sp.readline()
             if msg != '':
                 msg = msg.decode('utf-8').strip()
-                match = pattern.match(msg)
+
+                match = hit_pattern.match(msg)
                 if match:
                     self.on_sniffer_data({'number': int(match.group('NUMBER')), 'power': int(match.group('RATING'))}, self.context)
+                    continue
+
+                match = function_pattern.match(msg)
+                if match:
+                    self.on_sniffer_data({'function': int(match.group('NUMBER'))}, self.context)
+                    continue

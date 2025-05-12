@@ -60,7 +60,7 @@ struct  NumberPin
    int  value[3];
 };
 
-NumberPin number_pins[] =
+static NumberPin number_pins[] =
 {
    16, {1,  7,  0},  // Rubber A1
    17, {18, 19, 0},  // Rubber A2
@@ -82,7 +82,7 @@ struct RatingPin
    int    value;
 };
 
-RatingPin rating_pins[] =
+static RatingPin rating_pins[] =
 {
     0, Sector::RESERVED, 0, // Rubber B1
    15, Sector::UPPER,    3, // Rubber B2
@@ -96,8 +96,20 @@ RatingPin rating_pins[] =
     0, Sector::RESERVED, 0  // Rubber B10
 };
 
-int numbers_count = sizeof(number_pins)/sizeof(number_pins[0]);
-int ratings_count = sizeof(rating_pins)/sizeof(rating_pins[0]);
+// ---
+struct FunctionPin
+{
+   int   connector;
+   int   value;
+};
+
+static FunctionPin function_pins[] =
+{
+    5, 0 // F0
+};
+
+// ---
+static bool led = true;
 
 // ----------------------------------------------
 void setup()
@@ -111,7 +123,7 @@ void setup()
    // LED
    gpio_init(PICO_DEFAULT_LED_PIN);
    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-   gpio_put(PICO_DEFAULT_LED_PIN, true);
+   gpio_put(PICO_DEFAULT_LED_PIN, led);
 
    // OUTPUT
    for (const NumberPin& number_pin : number_pins)
@@ -134,6 +146,14 @@ void setup()
          gpio_set_dir(rating_pin.connector, GPIO_IN);
       }
    }
+
+   // Functions
+   for (const FunctionPin& function_pin : function_pins)
+   {
+      gpio_init(function_pin.connector);
+      gpio_set_dir(function_pin.connector, GPIO_IN);
+      gpio_pull_up(function_pin.connector);
+   }
 }
 
 // ----------------------------------------------
@@ -155,8 +175,7 @@ int main()
             {
                if ((rating_pin.connector != 0) && gpio_get(rating_pin.connector))
                {
-                  sleep_ms (debounceTime);
-
+                  sleep_ms(debounceTime);
                   while (gpio_get(rating_pin.connector))
                   {
                      // Wait for key to be released
@@ -170,10 +189,28 @@ int main()
                   {
                      std::cout << number_pin.value[rating_pin.sector] << 'X' << rating_pin.value << '\n';
                   }
+
+                  led = !led;
+                  gpio_put(PICO_DEFAULT_LED_PIN, led);
                }
             }
 
             gpio_put(number_pin.connector, false);
+         }
+      }
+
+      for (const FunctionPin& function_pin : function_pins)
+      {
+         if (!gpio_get(function_pin.connector))
+         {
+            sleep_ms(debounceTime);
+            while (!gpio_get(function_pin.connector))
+            {
+               // Wait for key to be released
+            }
+            std::cout << 'F' << function_pin.value << '\n';
+            led = !led;
+            gpio_put(PICO_DEFAULT_LED_PIN, led);
          }
       }
    }
