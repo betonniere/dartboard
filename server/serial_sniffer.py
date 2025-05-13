@@ -16,21 +16,16 @@
 
 import queue
 import re
-import random
 import rich
 import serial
 import threading
-import time
 
 
 # ----------------------------------
 class SerialSniffer(threading.Thread):
     # ----
-    def __init__(self, on_sniffer_data, context, fake, device):
-        if fake:
-            threading.Thread.__init__(self, target=self.fake_looper)
-        else:
-            threading.Thread.__init__(self, target=self.looper)
+    def __init__(self, on_sniffer_data, context, device):
+        threading.Thread.__init__(self, target=self.looper)
 
         self.sniffer_queue   = queue.Queue()
         self.context         = context
@@ -40,25 +35,6 @@ class SerialSniffer(threading.Thread):
     # ----
     def stop(self):
         self.sniffer_queue.put("STOP")
-
-    # ----
-    def fake_looper(self):
-        sectors = list(range(15, 20 + 1)) + [25]
-        while True:
-            sector = sectors[random.randint(0, len(sectors)) - 1]
-            if sector == 25:
-                power = random.randint(1, 2)
-            else:
-                power = random.randint(1, 3)
-
-            self.on_sniffer_data({'number': sector, 'power': power}, self.context)
-
-            if not self.sniffer_queue.empty():
-                data = self.sniffer_queue.get()
-                if data == "STOP":
-                    return
-
-            time.sleep(1)
 
     # ----
     def looper(self):
