@@ -8,20 +8,6 @@ project(pico-dart)
 
 pico_sdk_init()
 
-#
-# hello-world
-#
-add_executable(hello-world
-   ../hello-world.cpp
-)
-target_link_libraries(hello-world pico_stdlib)
-pico_enable_stdio_usb(hello-world 1)
-pico_enable_stdio_uart(hello-world 1)
-pico_add_extra_outputs(hello-world)
-
-#
-# pico-dart
-#
 add_executable(pico-dart
    ../pico-dart.cpp
 )

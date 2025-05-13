@@ -8,11 +8,7 @@ cmake:
 compile:
 	cd build && make -j3
 
-hello-world: compile
-	cp ./build/hello-world.uf2 /media/yannick/RPI-RP2
-	make monitor
-
-pico-dart: compile
+upload: compile
 	cp ./build/pico-dart.uf2 /media/yannick/RPI-RP2
 	make monitor
 
