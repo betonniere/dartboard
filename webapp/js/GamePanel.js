@@ -84,7 +84,7 @@ class GamePanel extends Panel
 
       if (game_over)
       {
-        players = data['rankings'];
+        players = data['rankings'].reverse();
       }
       else
       {
