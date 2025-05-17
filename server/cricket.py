@@ -290,7 +290,5 @@ class Cricket:
             return self.add_player()
         elif msg['name'] == 'REMOVE_PLAYER':
             return self.remove_player()
-        elif msg['name'] == 'NEXT_PLAYER':
-            return self.next_player(self.players)
 
         return False
