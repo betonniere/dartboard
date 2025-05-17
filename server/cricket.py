@@ -159,6 +159,10 @@ class Cricket:
         self.reset()
 
     # ----
+    def on_function(self, number):
+        self.next_player(self.players)
+
+    # ----
     def on_hit(self, number, power):
         player = self.current
         if player:
