@@ -19,6 +19,7 @@ import re
 import rich
 import serial
 import threading
+import time
 
 
 # ----------------------------------
@@ -49,6 +50,8 @@ class SerialSniffer(threading.Thread):
         hit_pattern = re.compile(r'^(?P<NUMBER>(\d{1,2}))X(?P<RATING>(\d))$')
         function_pattern = re.compile(r'^F(?P<NUMBER>(\d{1,2}))$')
 
+        last_function = None
+
         while True:
             if not self.sniffer_queue.empty():
                 data = self.sniffer_queue.get()
@@ -67,5 +70,8 @@ class SerialSniffer(threading.Thread):
 
                 match = function_pattern.match(msg)
                 if match:
-                    self.on_sniffer_data({'function': int(match.group('NUMBER'))}, self.context)
+                    now = time.perf_counter()
+                    if last_function is None or now - last_function > 0.2:
+                        last_function = now
+                        self.on_sniffer_data({'function': int(match.group('NUMBER'))}, self.context)
                     continue

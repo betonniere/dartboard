@@ -124,17 +124,22 @@ def on_sniffer_data(data, spawner=None):
             IOLoop.current().remove_timeout(idle)
             idle = None
 
-        message = {'name': 'HIT', 'data': data}
+        if 'number' in data:
+            message = {'name': 'HIT', 'data': data}
 
-        for c in clients:
-            c.write_message(json.dumps(message))
+            for c in clients:
+                c.write_message(json.dumps(message))
 
-        game.on_hit(message['data']['number'], message['data']['power'])
-        idle = IOLoop.current().call_later(delay=3, callback=on_idle)
+            game.on_hit(message['data']['number'], message['data']['power'])
+
+        elif 'function' in data:
+            game.on_function(data['function'])
 
         game_screenshot = game.screenshot()
         for c in clients:
             c.refresh(game_screenshot, clients)
+
+        idle = IOLoop.current().call_later(delay=3, callback=on_idle)
 
 
 # -------------------------------------------------

@@ -123,6 +123,8 @@ class Player:
 
 # ----------------------------------
 class Cricket:
+    max_rounds = 20
+
     # ----
     def __init__(self):
         self.recovery_path = os.getcwd() + '/games/cricket.json'
@@ -159,6 +161,10 @@ class Cricket:
         self.reset()
 
     # ----
+    def on_function(self, number):
+        self.next_player(self.players)
+
+    # ----
     def on_hit(self, number, power):
         player = self.current
         if player:
@@ -173,7 +179,7 @@ class Cricket:
     def started(self):
         if len(self.players) == 0:
             return False
-        elif self.rounds_to_go < 20:
+        elif self.rounds_to_go < Cricket.max_rounds:
             return True
         if self.current != self.players[0]:
             return True
@@ -184,7 +190,7 @@ class Cricket:
 
     # ----
     def add_player(self, player=None):
-        if self.rounds_to_go < 20:
+        if self.rounds_to_go < Cricket.max_rounds:
             return False
 
         if len(self.players) >= 0 and len(self.players) < 8:
@@ -271,7 +277,7 @@ class Cricket:
 
     # ----
     def reset(self):
-        self.rounds_to_go = 20
+        self.rounds_to_go = Cricket.max_rounds
         self.players = self.players + self.rankings
         self.players = sorted(self.players, key=lambda player: player.name)
         self.rankings = []
