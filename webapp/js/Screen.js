@@ -50,6 +50,8 @@ class Screen
     this.error  = document.getElementById (error_screen_id);
 
     this.pending_panels = 0;
+
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
 
   // ----
@@ -198,12 +200,7 @@ class Screen
       }
       else if (json_msg['name'] == 'HIT')
       {
-        {
-          let sound = document.getElementById ('hit_sound');
-
-          sound.play ();
-        }
-
+        this.playSound("pop.ogg");
         this.darts_panel.draw (json_msg['data']['number'], json_msg['data']['power']);
       }
       else if (json_msg['name'] == 'IDLE')
@@ -216,6 +213,22 @@ class Screen
       }
     }
   }
+
+   // ----
+   async playSound(url) {
+      try {
+         const response = await fetch(url);
+         const arrayBuffer = await response.arrayBuffer();
+         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+         const source = this.audioContext.createBufferSource();
+         source.buffer = audioBuffer;
+         source.connect(this.audioContext.destination);
+         source.start(0);
+      } catch (error) {
+         console.error('Erreur lors du chargement ou de la lecture du son :', error);
+      }
+   }
 
   // ----
   reconnect (reason)
