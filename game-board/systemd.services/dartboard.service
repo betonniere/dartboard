@@ -4,9 +4,9 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python /home/pi/dartboard/server/server.py
-WorkingDirectory=/home/pi/dartboard/server
-User=pi
+ExecStart=/usr/bin/python /home/yannick/dartboard/game-board/server/server.py
+WorkingDirectory=/home/yannick/dartboard/game-board/server
+User=yannick
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
