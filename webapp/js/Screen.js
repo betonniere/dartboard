@@ -40,6 +40,11 @@ function removePlayer ()
   screen.removePlayer ();
 }
 
+function nextPlayer ()
+{
+  screen.nextPlayer ();
+}
+
 class Screen
 {
   // ----
@@ -68,6 +73,12 @@ class Screen
   removePlayer ()
   {
     this.socket.send ('{"name": "REMOVE_PLAYER"}');
+  }
+
+  // ----
+  nextPlayer ()
+  {
+    this.socket.send ('{"name": "NEXT_PLAYER"}');
   }
 
   // ----

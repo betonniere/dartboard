@@ -34,7 +34,7 @@ class ScoreBoard:
     def record_points(self, number, power):
         points = 0
         if number in self.locks:
-            for i in range(0, power):
+            for _ in range(0, power):
                 if self.locks[number] > 0:
                     self.locks[number] -= 1
                 else:
@@ -95,6 +95,9 @@ class Player:
 
     # ----
     def on_hit(self, number, power, competitors):
+        if self.game_achieved(competitors) or self.out_of_darts():
+            return
+
         points = self.scoreboard.record_points(number, power)
         self.darts_used += 1
 
@@ -104,11 +107,14 @@ class Player:
                     self.score += number * points
                     break
 
+        if self.game_achieved(competitors):
+            self.darts_used = 3
+
     # ----
     def game_achieved(self, competitors):
         if (self.scoreboard.completed()):
             for c in competitors:
-                if (c is not self) and (self.score <= c.score):
+                if (c is not self) and (self.score < c.score):
                     return False
             return True
 
@@ -132,12 +138,8 @@ class Cricket:
 
                 try:
                     self.rounds_to_go = game['rounds_to_go']
-                    for json_player in game['players']:
-                        player = Player(json_player)
-                        self.players.append(player)
-                    for json_player in game['rankings']:
-                        player = Player(json_player)
-                        self.rankings.append(player)
+                    self.players = [Player(p) for p in game.get('players', [])]
+                    self.rankings = [Player(p) for p in game.get('rankings', [])]
                 except:
                     self.create_default()
                     return
@@ -151,28 +153,16 @@ class Cricket:
 
     # ----
     def create_default(self):
-        for p in range(0, 2):
+        for _ in range(2):
             self.add_player()
 
         self.reset()
 
     # ----
     def on_hit(self, number, power):
-        if self.current:
-            player = self.current
-
+        player = self.current
+        if player:
             player.on_hit(number, power, self.players)
-
-            if player.game_achieved(self.players):
-                next_player = self.toggle_player()
-                self.give_rank(player)
-
-                if len(self.players) == 1:
-                    self.give_rank(next_player)
-                else:
-                    self.start_round(next_player)
-            elif player.out_of_darts():
-                self.toggle_player()
 
     # ----
     def give_rank(self, player):
@@ -194,7 +184,7 @@ class Cricket:
 
     # ----
     def add_player(self, player=None):
-        if self.started():
+        if self.rounds_to_go < 20:
             return False
 
         if len(self.players) >= 0 and len(self.players) < 8:
@@ -216,6 +206,24 @@ class Cricket:
             return True
 
         return False
+
+    # ----
+    def next_player(self, competitors):
+        if len(self.players) == 0:
+            return False
+
+        player = self.current
+        next_player = self.toggle_player()
+
+        if player.game_achieved(competitors):
+            self.give_rank(player)
+
+        if len(self.players) == 1:
+            self.give_rank(next_player)
+        else:
+            self.start_round(next_player)
+
+        return True
 
     # ----
     def start_round(self, at=None):
@@ -282,5 +290,7 @@ class Cricket:
             return self.add_player()
         elif msg['name'] == 'REMOVE_PLAYER':
             return self.remove_player()
+        elif msg['name'] == 'NEXT_PLAYER':
+            return self.next_player(self.players)
 
         return False
