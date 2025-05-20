@@ -52,7 +52,17 @@ class Screen
     this.pending_panels = 0;
 
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    this.downloadFile('http://betton.escrime.free.fr/documents/BellePoule/latest.html');
   }
+
+  // ----
+   async downloadFile(url) {
+      const response = await fetch(url);
+      const texte = await response.text();
+      console.log(texte);
+      return texte;
+   }
 
   // ----
   reset ()
