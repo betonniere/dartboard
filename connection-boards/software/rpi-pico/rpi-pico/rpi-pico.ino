@@ -37,7 +37,8 @@ typedef enum
 {
    LOWER = 0,
    UPPER,
-   CENTER
+   CENTER,
+   RESERVED
 } Sector;
 
 // ---
@@ -49,16 +50,16 @@ typedef struct
 
 NumberPin number_pins[] =
 {
-   1  + 3, {7,  1,  0},  // Rubber A1
-   2  + 3, {19, 18, 0},  // Rubber A2
-   3  + 3, {3,  4,  0},  // Rubber A3
-   4  + 3, {17, 13, 0},  // Rubber A4
-   5  + 3, {2,  6,  0},  // Rubber A5
-   6  + 3, {15, 10, 0},  // Rubber A6
-   7  + 3, {16, 20, 0},  // Rubber A7
-   8  + 3, {8,  5,  0},  // Rubber A8
-   9  + 3, {11, 12, 25}, // Rubber A9
-   10 + 3, {14, 9,  50}  // Rubber A10
+   2,  {7,  1,  0},  // Rubber A1
+   3,  {19, 18, 0},  // Rubber A2
+   4,  {3,  4,  0},  // Rubber A3
+   5,  {17, 13, 0},  // Rubber A4
+   6,  {2,  6,  0},  // Rubber A5
+   7,  {15, 10, 0},  // Rubber A6
+   8,  {16, 20, 0},  // Rubber A7
+   9,  {8,  5,  0},  // Rubber A8
+   10, {11, 12, 25}, // Rubber A9
+   11, {14, 9,  50}  // Rubber A10
 };
 
 // ---
@@ -71,16 +72,16 @@ typedef struct
 
 RatingPin rating_pins[] =
 {
-   0,  0,      0, // Rubber B1
-   A0, UPPER,  3, // Rubber B2
-   A1, UPPER,  2, // Rubber B3
-   A2, UPPER,  1, // Rubber B4
-   3,  CENTER, 1, // Rubber B5
-   A3, LOWER,  1, // Rubber B6
-   A4, LOWER,  2, // Rubber B7
-   A5, LOWER,  3, // Rubber B8
-   0,  0,      0, // Rubber B9
-   0,  0,      0  // Rubber B10
+   0,  RESERVED, 0, // Rubber B1
+   22, UPPER,    3, // Rubber B2
+   21, UPPER,    2, // Rubber B3
+   20, UPPER,    1, // Rubber B4
+   19, CENTER,   1, // Rubber B5
+   18, LOWER,    1, // Rubber B6
+   17, LOWER,    2, // Rubber B7
+   16, LOWER,    3, // Rubber B8
+   0,  RESERVED, 0, // Rubber B9
+   0,  RESERVED, 0  // Rubber B10
 };
 
 int numbers_count = sizeof(number_pins)/sizeof(number_pins[0]);
@@ -97,7 +98,7 @@ int ratings_count = sizeof(rating_pins)/sizeof(rating_pins[0]);
 // -------------------------------------
 void setup ()
 {
-   Serial.begin (115200);
+   Serial1.begin (115200);
 
    // PIN configuration
    for (int v = 0; v < numbers_count; v++)
@@ -122,7 +123,9 @@ void setup ()
       }
    }
 
-   Serial.println (GREEN "Dartboard OK!" WHITE);
+   pinMode(LED_BUILTIN, OUTPUT);
+
+   Serial1.println (GREEN "Dartboard OK!" WHITE);
 }
 
 // -------------------------------------
@@ -132,7 +135,13 @@ void loop ()
 
    if (key != 0)
    {
-      Serial.println (key);
+      Serial1.println (key);
+      digitalWrite (LED_BUILTIN, HIGH);
+   }
+   else
+   {
+      Serial1.println (YELLOW "Failed" WHITE);
+      digitalWrite (LED_BUILTIN, LOW);
    }
 }
 
@@ -164,15 +173,15 @@ char getKey ()
 
                if (number_pin->value[rating_pin->sector] == 50)
                {
-                  Serial.print (25);
-                  Serial.print ("X");
-                  Serial.println (2);
+                  Serial1.print (25);
+                  Serial1.print ("X");
+                  Serial1.println (2);
                }
                else
                {
-                  Serial.print (number_pin->value[rating_pin->sector]);
-                  Serial.print ("X");
-                  Serial.println (rating_pin->value);
+                  Serial1.print (number_pin->value[rating_pin->sector]);
+                  Serial1.print ("X");
+                  Serial1.println (rating_pin->value);
                }
             }
          }
