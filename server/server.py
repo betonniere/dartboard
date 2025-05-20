@@ -142,6 +142,7 @@ def parse_args():
     global args
 
     parser = argparse.ArgumentParser(description='Dartboard web server')
+    parser.add_argument('-u', '--usb',     action='store_true', help='Read the hits from USB connector.')
     parser.add_argument('-f', '--fake',    action='store_true', help='Generate fake events')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
 
@@ -173,7 +174,11 @@ if __name__ == '__main__':
     zeroconf.publish()
 
     main_loop = IOLoop.instance()
-    sniffer   = SerialSniffer(on_sniffer_data, main_loop, args.fake)
+    if args.usb:
+        device = 'ttyACM0'
+    else:
+        device = 'ttyS0'
+    sniffer = SerialSniffer(on_sniffer_data, main_loop, args.fake, device)
 
     try:
         sniffer.start()
