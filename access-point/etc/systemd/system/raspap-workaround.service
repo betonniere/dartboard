@@ -1,0 +1,10 @@
+[Unit]
+Description=Set static IP on wlan0
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip addr add 10.3.141.1/24 dev wlan0
+
+[Install]
+WantedBy=multi-user.target
