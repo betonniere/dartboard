@@ -155,6 +155,8 @@ class Cricket:
 
     # ----
     def create_default(self):
+        self.rounds_to_go = Cricket.max_rounds
+
         for _ in range(2):
             self.add_player()
 
