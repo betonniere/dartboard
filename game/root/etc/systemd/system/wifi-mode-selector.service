@@ -1,0 +1,12 @@
+[Unit]
+Description=Sélection du mode Wi-Fi (AP ou Client)
+Before=network.target
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-mode-selector.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
