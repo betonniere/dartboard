@@ -1,0 +1,13 @@
+[Unit]
+Description=Sélection du mode Wi-Fi (AP ou Client)
+After=local-fs.target systemd-rfkill.service
+Wants=network.target
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-mode-selector.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

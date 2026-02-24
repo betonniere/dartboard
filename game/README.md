@@ -1,1 +1,2 @@
-sudo systemctl disable dhcpcd
+# 1. Prérequis
+sudo systemctl disable hostapd dnsmasq nodogsplash
