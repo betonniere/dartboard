@@ -1,8 +1,7 @@
 [Unit]
 Description=Sélection du mode Wi-Fi (AP ou Client)
-After=local-fs.target systemd-rfkill.service
-Wants=network.target
-Before=network.target
+After=NetworkManager.service
+Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
