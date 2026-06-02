@@ -60,10 +60,10 @@ class Player:
     # ----
     def __init__(self, json_player=None):
         if json_player:
-            self.name       = json_player['name']
+            self.name = json_player['name']
             self.darts_used = json_player['darts_used']
-            self.score      = json_player['score']
-            self.thrower    = json_player['thrower']
+            self.score = json_player['score']
+            self.thrower = json_player['thrower']
             self.scoreboard = ScoreBoard(json_player['scoreboard'])
         else:
             self.name = None
@@ -72,8 +72,8 @@ class Player:
     # ----
     def reset(self):
         self.darts_used = 0
-        self.score      = 0
-        self.thrower    = False
+        self.score = 0
+        self.thrower = False
         self.scoreboard = ScoreBoard()
 
     # ----
@@ -112,7 +112,7 @@ class Player:
 
     # ----
     def game_achieved(self, competitors):
-        if (self.scoreboard.completed()):
+        if self.scoreboard.completed():
             for c in competitors:
                 if (c is not self) and (self.score < c.score):
                     return False
@@ -128,10 +128,10 @@ class Cricket:
     # ----
     def __init__(self):
         self.recovery_path = os.getcwd() + '/games/cricket.json'
-        self.players      = []
-        self.rankings     = []
-        self.current      = None
-        self.iterator     = None
+        self.players = []
+        self.rankings = []
+        self.current = None
+        self.iterator = None
         self.rounds_to_go = 0
 
         if os.path.isfile(self.recovery_path):
@@ -142,7 +142,7 @@ class Cricket:
                     self.rounds_to_go = game['rounds_to_go']
                     self.players = [Player(p) for p in game.get('players', [])]
                     self.rankings = [Player(p) for p in game.get('rankings', [])]
-                except:
+                except Exception:
                     self.create_default()
                     return
 
@@ -241,7 +241,7 @@ class Cricket:
                 self.give_rank(self.players[0])
         else:
             self.iterator = iter(self.players)
-            self.current  = next(self.iterator, None)
+            self.current = next(self.iterator, None)
             if self.current:
                 if at:
                     while self.current != at:
@@ -266,7 +266,7 @@ class Cricket:
     def screenshot(self):
         players = json.dumps(self.players, default=lambda o: o.__dict__, indent=4)
         rankings = json.dumps(self.rankings, default=lambda o: o.__dict__, indent=4)
-        image  = '{\n'
+        image = '{\n'
         image += '"rounds_to_go": ' + str(self.rounds_to_go) + ',\n'
         image += '"players": ' + players + ',\n'
         image += '"rankings": ' + rankings + '\n'
