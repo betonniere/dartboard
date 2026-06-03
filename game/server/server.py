@@ -29,11 +29,11 @@ from serial_sniffer import SerialSniffer
 from zeroconf import ZeroconfService
 from cricket import Cricket
 
-args     = None
-game     = None
+args = None
+game = None
 zeroconf = None
-idle     = None
-clients  = []
+idle = None
+clients = []
 
 
 # ----------------------------------
@@ -87,16 +87,17 @@ class IndexPageHandler(web.RequestHandler):
 class Application(web.Application):
     # ----
     def __init__(self):
-        handlers = [(r'/',          IndexPageHandler),
-                    (r'/(.*css)',   web.StaticFileHandler, {'path': '../webapp/css'}),
-                    (r'/(.*png)',   web.StaticFileHandler, {'path': '../webapp/images'}),
-                    (r'/(.*jpg)',   web.StaticFileHandler, {'path': '../webapp/images'}),
-                    (r'/(.*svg)',   web.StaticFileHandler, {'path': '../webapp/images'}),
-                    (r'/(.*ogg)',   web.StaticFileHandler, {'path': '../webapp/sounds'}),
-                    (r'/(.*js)',    web.StaticFileHandler, {'path': '../webapp/js'}),
-                    (r'/websocket', WebSocketHandler)]
-        settings = {'template_path': '',
-                    'debug':         True}
+        handlers = [
+            (r'/', IndexPageHandler),
+            (r'/(.*css)', web.StaticFileHandler, {'path': '../webapp/css'}),
+            (r'/(.*png)', web.StaticFileHandler, {'path': '../webapp/images'}),
+            (r'/(.*jpg)', web.StaticFileHandler, {'path': '../webapp/images'}),
+            (r'/(.*svg)', web.StaticFileHandler, {'path': '../webapp/images'}),
+            (r'/(.*ogg)', web.StaticFileHandler, {'path': '../webapp/sounds'}),
+            (r'/(.*js)', web.StaticFileHandler, {'path': '../webapp/js'}),
+            (r'/websocket', WebSocketHandler),
+        ]
+        settings = {'template_path': '', 'debug': True}
 
         web.Application.__init__(self, handlers, **settings)
 
@@ -147,7 +148,7 @@ def parse_args():
     global args
 
     parser = argparse.ArgumentParser(description='Dartboard web server')
-    parser.add_argument('-u', '--usb',     action='store_true', help='Read the hits from USB connector.')
+    parser.add_argument('-u', '--usb', action='store_true', help='Read the hits from USB connector.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
 
     args = parser.parse_args()
@@ -174,8 +175,15 @@ if __name__ == '__main__':
     server = HTTPServer(app)
     server.listen(8080)
 
-    zeroconf = ZeroconfService(name="Dartboard", port=8080)
+    zeroconf = ZeroconfService(name='Dartboard', port=8080)
     zeroconf.publish()
+
+    cmd = ['nmcli', '-g', 'NAME', 'connection', 'show', '--active']
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    print(f'Running command: {" ".join(cmd)}')
+    if result.returncode == 0:
+        active_connections = result.stdout.strip().split()
+        rich.print('Active connections:', active_connections)
 
     main_loop = IOLoop.instance()
     if args.usb:
