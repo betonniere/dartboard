@@ -5,8 +5,10 @@
 
 import argparse
 import json
-import rich
+import logging
 import subprocess
+
+from rich.logging import RichHandler  # <--- À ajouter dans vos imports
 
 import tornado.web as web
 import tornado.websocket as websocket
@@ -16,6 +18,8 @@ from tornado.ioloop import IOLoop
 from serial_sniffer import SerialSniffer
 from zeroconf import ZeroconfService
 from cricket import Cricket
+
+logger = logging.getLogger('dartboard.server')
 
 
 # ----------------------------------
@@ -36,8 +40,7 @@ class WebSocketHandler(websocket.WebSocketHandler):
         except json.JSONDecodeError:
             return
 
-        if app.args.verbose:
-            rich.print(message_data)
+        logger.info(message_data)
 
         if 'name' in message_data:
             if message_data['name'] == 'HIT':
@@ -56,7 +59,9 @@ class WebSocketHandler(websocket.WebSocketHandler):
     # ----
     def refresh(self, game_screenshot, sockets):
         if self.application.game:
-            game_msg = json.dumps({'name': 'GAME', 'data': json.loads(game_screenshot)})
+            game_msg = json.dumps(
+                {'name': 'GAME', 'data': json.loads(game_screenshot)}
+            )
             for s in sockets:
                 s.write_message(game_msg)
 
@@ -102,8 +107,7 @@ class Application(web.Application):
             spawner.spawn_callback(self.on_sniffer_data, data, None)
             return
 
-        if self.args.verbose:
-            rich.print(data)
+        logger.info(data)
 
         if self.game:
             if self.idle:
@@ -114,7 +118,9 @@ class Application(web.Application):
                 message = {'name': 'HIT', 'data': data}
                 for c in self.clients:
                     c.write_message(json.dumps(message))
-                self.game.on_hit(message['data']['number'], message['data']['power'])
+                self.game.on_hit(
+                    message['data']['number'], message['data']['power']
+                )
             elif 'function' in data:
                 self.game.on_function(data['function'])
 
@@ -122,25 +128,34 @@ class Application(web.Application):
             for c in self.clients:
                 c.refresh(game_screenshot, self.clients)
 
-            self.idle = IOLoop.current().call_later(delay=3, callback=self.on_idle)
+            self.idle = IOLoop.current().call_later(
+                delay=3, callback=self.on_idle
+            )
 
 
 # -------------------------------------------------
 def parse_args():
     parser = argparse.ArgumentParser(description='Dartboard web server')
-    parser.add_argument('-u', '--usb', action='store_true', help='Read the hits from USB connector.')
+    parser.add_argument(
+        '-u',
+        '--usb',
+        action='store_true',
+        help='Read the hits from USB connector.',
+    )
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     return parser.parse_args()
 
 
 # -------------------------------------------------
-def fetch_upgrade(verbose):
-    result = subprocess.run(['git', 'remote', 'get-url', 'origin'], capture_output=True, text=True)
+def fetch_upgrade():
+    result = subprocess.run(
+        ['git', 'remote', 'get-url', 'origin'], capture_output=True, text=True
+    )
     if result.stdout and result.stdout.startswith('https://'):
         result = subprocess.run(['git', 'pull'], capture_output=True, text=True)
-        if verbose:
-            rich.print(result.stdout)
-            rich.print(result.stderr)
+
+        logger.info(result.stdout)
+        logger.info(result.stderr)
 
 
 # --------------------------------------------
@@ -150,13 +165,23 @@ def log_active_connections():
     if result.returncode == 0:
         active_connections = result.stdout.strip().split()
         if active_connections:
-            rich.print('Active connections:', active_connections[0])
+            logger.info(f'Active connections: {active_connections[0]}')
 
 
 # -------------------------------------------------
 def main():
     args = parse_args()
-    fetch_upgrade(args.verbose)
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format='%(message)s',
+        datefmt='[%X]',
+        handlers=[RichHandler(rich_tracebacks=True, show_time=False)],
+    )
+
+    logger.info('Démarrage du serveur Dartboard sur le port 8080...')
+
+    fetch_upgrade()
 
     app = Application(args)
     server = HTTPServer(app)
