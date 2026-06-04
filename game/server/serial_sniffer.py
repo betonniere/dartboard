@@ -28,14 +28,14 @@ class SerialSniffer(threading.Thread):
     def __init__(self, on_sniffer_data, context, device):
         threading.Thread.__init__(self, target=self.looper)
 
-        self.sniffer_queue   = queue.Queue()
-        self.context         = context
+        self.sniffer_queue = queue.Queue()
+        self.context = context
         self.on_sniffer_data = on_sniffer_data
-        self.device          = device
+        self.device = device
 
     # ----
     def stop(self):
-        self.sniffer_queue.put("STOP")
+        self.sniffer_queue.put('STOP')
 
     # ----
     def looper(self):
@@ -55,7 +55,7 @@ class SerialSniffer(threading.Thread):
         while True:
             if not self.sniffer_queue.empty():
                 data = self.sniffer_queue.get()
-                if data == "STOP":
+                if data == 'STOP':
                     self.sp.close()
                     return
 
@@ -65,7 +65,13 @@ class SerialSniffer(threading.Thread):
 
                 match = hit_pattern.match(msg)
                 if match:
-                    self.on_sniffer_data({'number': int(match.group('NUMBER')), 'power': int(match.group('RATING'))}, self.context)
+                    self.on_sniffer_data(
+                        {
+                            'number': int(match.group('NUMBER')),
+                            'power': int(match.group('RATING')),
+                        },
+                        self.context,
+                    )
                     continue
 
                 match = function_pattern.match(msg)
@@ -73,5 +79,8 @@ class SerialSniffer(threading.Thread):
                     now = time.perf_counter()
                     if last_function is None or now - last_function > 0.2:
                         last_function = now
-                        self.on_sniffer_data({'function': int(match.group('NUMBER'))}, self.context)
+                        self.on_sniffer_data(
+                            {'function': int(match.group('NUMBER'))},
+                            self.context,
+                        )
                     continue

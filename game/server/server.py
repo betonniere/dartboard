@@ -1,7 +1,18 @@
-#!/usr/bin/env python
 # Copyright (C) Yannick Le Roux.
 # This file is part of Dartboard.
-# [...] (Mentions de licence conservées)
+#
+#   Dartboard is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   Dartboard is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
 import json
@@ -15,6 +26,7 @@ import tornado.websocket as websocket
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
+from network_status import NetworkStatus
 from serial_sniffer import SerialSniffer
 from cricket import Cricket
 
@@ -29,7 +41,7 @@ class WebSocketHandler(websocket.WebSocketHandler):
 
     # ----
     def open(self):
-        self.application.clients.append(self)
+        self.application.on_client(self)
 
     # ----
     def on_message(self, message):
@@ -79,6 +91,7 @@ class Application(web.Application):
         self.args = args
         self.game = None
         self.idle = None
+        self.network_status = 'Unknown'
         self.clients = []
 
         handlers = [
@@ -95,10 +108,32 @@ class Application(web.Application):
         super().__init__(handlers, **settings)
 
     # ----
+    def on_client(self, client):
+        self.clients.append(client)
+
+        message = json.dumps(
+            {
+                'name': 'NETWORK_STATUS',
+                'data': {'connection': self.network_status},
+            }
+        )
+
+        client.write_message(message)
+
+    # ----
     def on_idle(self):
         message = json.dumps({'name': 'IDLE'})
-        for c in self.clients:
-            c.write_message(message)
+        for client in self.clients:
+            client.write_message(message)
+
+    # ----
+    def on_network_status(self, status, spawner=None):
+        if spawner:
+            spawner.spawn_callback(self.on_network_status, status, None)
+            return
+
+        self.network_status = status
+        logger.info(f'Active connections: {status}')
 
     # ----
     def on_sniffer_data(self, data, spawner=None):
@@ -115,8 +150,8 @@ class Application(web.Application):
 
             if 'number' in data:
                 message = {'name': 'HIT', 'data': data}
-                for c in self.clients:
-                    c.write_message(json.dumps(message))
+                for client in self.clients:
+                    client.write_message(json.dumps(message))
                 self.game.on_hit(
                     message['data']['number'], message['data']['power']
                 )
@@ -124,8 +159,8 @@ class Application(web.Application):
                 self.game.on_function(data['function'])
 
             game_screenshot = self.game.screenshot()
-            for c in self.clients:
-                c.refresh(game_screenshot, self.clients)
+            for client in self.clients:
+                client.refresh(game_screenshot, self.clients)
 
             self.idle = IOLoop.current().call_later(
                 delay=3, callback=self.on_idle
@@ -157,16 +192,6 @@ def fetch_upgrade():
         logger.info(result.stderr)
 
 
-# --------------------------------------------
-def log_active_connections():
-    cmd = ['nmcli', '-g', 'NAME', 'connection', 'show', '--active']
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode == 0:
-        active_connections = result.stdout.strip().split()
-        if active_connections:
-            logger.info(f'Active connections: {active_connections[0]}')
-
-
 # -------------------------------------------------
 def main():
     args = parse_args()
@@ -186,23 +211,27 @@ def main():
     server = HTTPServer(app)
     server.listen(8080)
 
-    log_active_connections()
-
     main_loop = IOLoop.current()
+
     device = 'ttyACM0' if args.usb else 'ttyS0'
     sniffer = SerialSniffer(app.on_sniffer_data, main_loop, device)
 
+    networkStatus = NetworkStatus(app.on_network_status, main_loop)
+
     try:
         sniffer.start()
+        networkStatus.start()
+
         main_loop.start()
     except KeyboardInterrupt:
         pass
     finally:
         sniffer.stop()
         networkStatus.stop()
+
         goodbye_msg = json.dumps({'name': 'GOODBYE'})
-        for c in app.clients:
-            c.write_message(goodbye_msg)
+        for client in app.clients:
+            client.write_message(goodbye_msg)
 
 
 # --------------------------------------------
