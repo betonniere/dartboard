@@ -263,6 +263,19 @@ class Screen
       {
         this.game_panel.draw (json_msg['data']);
       }
+      else if (json_msg['name'] == 'NETWORK_STATUS')
+      {
+        if (json_msg['data']['connection'] == 'hotspot')
+        {
+          document.getElementById('wifi-button').style.display = 'block';
+          console.log ('block')
+        }
+        else
+        {
+          document.getElementById('wifi-button').style.display = 'none';
+          console.log ('none')
+        }
+      }
       else
       {
         console.log (msg.data);

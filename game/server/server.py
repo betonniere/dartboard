@@ -91,7 +91,7 @@ class Application(web.Application):
         self.args = args
         self.game = None
         self.idle = None
-        self.network_status = 'Unknown'
+        self.network_status = None
         self.clients = []
 
         handlers = [
@@ -111,6 +111,17 @@ class Application(web.Application):
     def on_client(self, client):
         self.clients.append(client)
 
+        if self.network_status:
+            self.send_network_status(client)
+
+    # ----
+    def on_idle(self):
+        message = json.dumps({'name': 'IDLE'})
+        for client in self.clients:
+            client.write_message(message)
+
+    # ----
+    def send_network_status(self, client):
         message = json.dumps(
             {
                 'name': 'NETWORK_STATUS',
@@ -121,18 +132,16 @@ class Application(web.Application):
         client.write_message(message)
 
     # ----
-    def on_idle(self):
-        message = json.dumps({'name': 'IDLE'})
-        for client in self.clients:
-            client.write_message(message)
-
-    # ----
     def on_network_status(self, status, spawner=None):
         if spawner:
             spawner.spawn_callback(self.on_network_status, status, None)
             return
 
-        self.network_status = status
+        if status != self.network_status:
+            self.network_status = status
+            for client in self.clients:
+                self.send_network_status(client)
+
         logger.info(f'Active connections: {status}')
 
     # ----

@@ -38,16 +38,22 @@ class NetworkStatus(threading.Thread):
         cmd = ['nmcli', '-g', 'NAME', 'connection', 'show', '--active']
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
-            active_connections = result.stdout.strip().split()
-            if active_connections:
-                self.on_network_status(active_connections[0])
+            active_connections = result.stdout.strip().splitlines()
+            if not active_connections:
+                self.on_network_status('disconnected')
+            elif 'HotspotDartboard' in active_connections:
+                self.on_network_status('hotspot')
+            else:
+                self.on_network_status('wifi')
 
     # ----
     def looper(self):
         while True:
+            self.send_network_status()
+
             try:
                 data = self.control_queue.get(block=True, timeout=5)
                 if data == 'STOP':
                     return
             except queue.Empty:
-                self.send_network_status()
+                pass
