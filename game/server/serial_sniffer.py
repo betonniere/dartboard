@@ -26,12 +26,13 @@ import time
 class SerialSniffer(threading.Thread):
     # ----
     def __init__(self, on_sniffer_data, context, device):
-        threading.Thread.__init__(self, target=self.looper)
+        super().__init__(target=self.looper)
 
         self.sniffer_queue = queue.Queue()
         self.context = context
         self.on_sniffer_data = on_sniffer_data
         self.device = device
+        self.sp = None
 
     # ----
     def stop(self):
@@ -40,7 +41,7 @@ class SerialSniffer(threading.Thread):
     # ----
     def looper(self):
         try:
-            self.sp = serial.Serial('/dev/' + self.device, 115200, timeout=1)
+            self.sp = serial.Serial(f'/dev/{self.device}', 115200, timeout=1)
         except serial.SerialException as e:
             rich.print(e)
             return
@@ -56,12 +57,17 @@ class SerialSniffer(threading.Thread):
             if not self.sniffer_queue.empty():
                 data = self.sniffer_queue.get()
                 if data == 'STOP':
-                    self.sp.close()
+                    if self.sp and self.sp.is_open:
+                        self.sp.close()
                     return
 
-            msg = self.sp.readline()
-            if msg != '':
-                msg = msg.decode('utf-8').strip()
+            msg_bytes = self.sp.readline()
+
+            if msg_bytes:
+                try:
+                    msg = msg_bytes.decode('utf-8').strip()
+                except UnicodeDecodeError:
+                    continue
 
                 match = hit_pattern.match(msg)
                 if match:

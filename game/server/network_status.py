@@ -14,6 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with Dartboard.  If not, see <http://www.gnu.org/licenses/>.
 
+import queue
 import subprocess
 import threading
 
@@ -22,14 +23,15 @@ import threading
 class NetworkStatus(threading.Thread):
     # ----
     def __init__(self, on_network_status, context):
-        threading.Thread.__init__(self, target=self.looper)
+        super().__init__(target=self.looper)
 
+        self.control_queue = queue.Queue()
         self.context = context
         self.on_network_status = on_network_status
 
     # ----
     def stop(self):
-        pass
+        self.control_queue.put('STOP')
 
     # ---
     def send_network_status(self):
@@ -42,4 +44,10 @@ class NetworkStatus(threading.Thread):
 
     # ----
     def looper(self):
-        self.send_network_status()
+        while True:
+            try:
+                data = self.control_queue.get(block=True, timeout=5)
+                if data == 'STOP':
+                    return
+            except queue.Empty:
+                self.send_network_status()
