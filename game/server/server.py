@@ -8,7 +8,7 @@ import json
 import logging
 import subprocess
 
-from rich.logging import RichHandler  # <--- À ajouter dans vos imports
+from rich.logging import RichHandler
 
 import tornado.web as web
 import tornado.websocket as websocket
@@ -16,7 +16,6 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 from serial_sniffer import SerialSniffer
-from zeroconf import ZeroconfService
 from cricket import Cricket
 
 logger = logging.getLogger('dartboard.server')
@@ -187,9 +186,6 @@ def main():
     server = HTTPServer(app)
     server.listen(8080)
 
-    zeroconf = ZeroconfService(name='Dartboard', port=8080)
-    zeroconf.publish()
-
     log_active_connections()
 
     main_loop = IOLoop.current()
@@ -203,7 +199,7 @@ def main():
         pass
     finally:
         sniffer.stop()
-        zeroconf.unpublish()
+        networkStatus.stop()
         goodbye_msg = json.dumps({'name': 'GOODBYE'})
         for c in app.clients:
             c.write_message(goodbye_msg)
