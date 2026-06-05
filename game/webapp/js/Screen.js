@@ -25,6 +25,21 @@ function startGame (canvas_id,
   screen.connect ();
 }
 
+function wifi ()
+{
+  screen.wifi ();
+}
+
+function cancelWifi ()
+{
+  screen.closeWifi ();
+}
+
+function validateWifi ()
+{
+  screen.validateWifi ();
+}
+
 function reset ()
 {
   screen.reset ();
@@ -52,6 +67,43 @@ class Screen
     this.pending_panels = 0;
 
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  // ----
+  wifi ()
+  {
+    document.getElementById('wifi-modal').style.display = 'flex';
+  }
+
+  // ----
+  closeWifi ()
+  {
+    document.getElementById('wifi-modal').style.display = 'none';
+    document.getElementById('wifi-password').value = '';
+  }
+
+  // ----
+  validateWifi ()
+  {
+    const ssid = document.getElementById('wifi-ssid').value;
+    const password = document.getElementById('wifi-password').value;
+
+    if (!ssid) {
+      alert("Le SSID ne peut pas être vide.");
+      return;
+    }
+
+    const configuration = {
+      action: "SET_WIFI",
+      data: {
+        ssid: ssid,
+        password: password
+      }
+    };
+
+    this.socket.send(JSON.stringify(configuration));
+
+    this.closeWifi ();
   }
 
   // ----
@@ -210,6 +262,10 @@ class Screen
       else if (json_msg['name'] == 'GAME')
       {
         this.game_panel.draw (json_msg['data']);
+      }
+      else
+      {
+        console.log (msg.data);
       }
     }
   }

@@ -14,7 +14,6 @@
     <script type="application/javascript" src="DartsPanel.js"></script>
     <script type="application/javascript" src="Sector.js"></script>
     <script type="application/javascript" src="GamePanel.js"></script>
-    </script>
   </head>
 
   <body onload='startGame ("canvas", "error");'>
@@ -22,8 +21,33 @@
       <p>Désolé, votre navigateur ne supporte pas Canvas. Mettez-vous à jour</p>
     </canvas>
 
+    <div id="wifi-modal" style="display: none;">
+      <div class="modal-content">
+        <h3>Réseau Dartboard</h3>
+
+        <label for="wifi-ssid">SSID (Nom du réseau)</label>
+        <input type="text" id="wifi-ssid" placeholder="Ex: Livebox-XXXX" spellcheck="false">
+
+        <label for="wifi-password">Code Wi-Fi</label>
+        <input type="password" id="wifi-password" placeholder="••••••••">
+
+        <div class="modal-buttons">
+          <button onclick="validateWifi()" class="css-button">
+            <span class="css-button-text" style="padding: 8px 15px;">Valider</span>
+          </button>
+          <button onclick="cancelWifi()" class="cancel-btn">Annuler</button>
+        </div>
+      </div>
+    </div>
+
     <div class="row">
-      <div>
+      <button type="button" class="css-button" onclick="wifi()">
+        <span class="css-button-text">
+          <span>⚙️ Wi-Fi</span>
+        </span>
+      </button>
+
+      <div style="padding-left: 40px;">
         <button type="button" class="css-button" onclick="reset()">
           <span class="css-button-icon"></span>
           <span class="css-button-text">
