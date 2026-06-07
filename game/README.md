@@ -20,8 +20,15 @@ sudo nmcli con modify HotspotDartboard ipv6.method disabled
 
 ## WifiClient
 
-sudo nmcli con add type wifi ifname wlan0 con-name WifiClient ssid "Votre-Box-Suisse"
+sudo nmcli con add type wifi ifname wlan0 con-name WifiClient ssid "Temporaire"
 
-sudo nmcli con modify WifiClient wifi-sec.key-mgmt wpa-psk wifi-sec.psk "VotreMotDePasse"
+sudo nmcli con modify WifiClient 802-11-wireless-security.key-mgmt wpa-psk
+sudo nmcli con modify WifiClient 802-11-wireless-security.psk "Temporaire"
 sudo nmcli con modify WifiClient connection.autoconnect yes
+sudo nmcli con modify WifiClient connection.auth-retries 1
+sudo nmcli con modify WifiClient connection.autoconnect-retries 1
 sudo nmcli con modify WifiClient ipv4.dhcp-timeout 5
+
+## Suppression du profil préconfiguré
+
+sudo nmcli con delete preconfigured

@@ -1,35 +1,53 @@
 #!/bin/bash
+# Copyright (C) Yannick Le Roux.
+# This file is part of Dartboard.
 
 INTERFACE="wlan0"
-GAME_PROFILE="HotspotDartboard"
+HOTSPOT_NAME="HotspotDartboard"
+CLIENT_NAME="WifiClient"
 GPIO_PIN=21
 
-logger "hotspot-switch: Initialisation"
+# Attente de l'interface Wi-Fi
+while [ ! -d "/sys/class/net/$INTERFACE" ]; do
+    sleep 0.5
+done
 
-# Unblock the Wi-Fi interface and wait for it to be available
+# Activation du Wi-Fi
 rfkill unblock wifi
 nmcli radio wifi on
 
+# Assurer que l'interface est gérée par NetworkManager
 nmcli device set "$INTERFACE" managed yes
 
-for i in {1..15}; do
-    if ip link show "$INTERFACE" &>/dev/null; then break; fi
+# Détection du mode par lecture du GPIO
+pinctrl set "$GPIO_PIN" ip pu
+GPIO_LEVEL=$(pinctrl lev "$GPIO_PIN" 2>/dev/null)
+
+if [ "$GPIO_LEVEL" = "0" ]; then
+    echo "[Dartboard] GPIO $GPIO_PIN détecté à l'état BAS. Mode Hotspot FORCÉ."
+    nmcli con up id "$HOTSPOT_NAME"
+    exit 0
+fi
+
+# --- Mode Failover classique ---
+MAX_ATTEMPTS=8
+ATTEMPT=0
+CONNECTED=0
+
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+    # Vérification immédiate de la connectivité Wi-Fi
+    if nmcli -t -f TYPE,STATE device | grep -q "wifi:connected"; then
+        CONNECTED=1
+        break
+    fi
+
     sleep 1
+    ATTEMPT=$((ATTEMPT + 1))
 done
 
-# Configure the GPIO pin and read its state
-pinctrl set "$GPIO_PIN" ip pu
-GPIO_STATE=$(pinctrl get "$GPIO_PIN" | grep -o "lo")
-
-if [ "$GPIO_STATE" == "lo" ]; then
-  logger "hotspot-switch: Activation HOTSPOT"
-
-  nmcli connection up "$GAME_PROFILE"
-
+if [ $CONNECTED -eq 0 ]; then
+    echo "[Dartboard] WifiClient introuvable ou échec d'association après ${MAX_ATTEMPTS}s. Bascule sur le Hotspot."
+    nmcli con up id "$HOTSPOT_NAME"
 else
-  logger "hotspot-switch: Activation CLIENT"
-
-  nmcli connection down "$GAME_PROFILE" 2>/dev/null || true
-  nmcli device wifi rescan >/dev/null 2>&1 || true
-  nmcli device connect "$INTERFACE" >/dev/null 2>&1 || true
+    echo "[Dartboard] Connexion WifiClient établie avec succès en ${ATTEMPT}s."
 fi

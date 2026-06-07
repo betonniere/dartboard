@@ -94,7 +94,7 @@ class Screen
     }
 
     const configuration = {
-      action: "SET_WIFI",
+      name: "SET_WIFI",
       data: {
         ssid: ssid,
         password: password

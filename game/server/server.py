@@ -21,6 +21,7 @@ import subprocess
 
 from rich.logging import RichHandler
 
+import tornado
 import tornado.web as web
 import tornado.websocket as websocket
 from tornado.httpserver import HTTPServer
@@ -44,7 +45,7 @@ class WebSocketHandler(websocket.WebSocketHandler):
         self.application.on_client(self)
 
     # ----
-    def on_message(self, message):
+    async def on_message(self, message):
         app = self.application
         try:
             message_data = json.loads(message)
@@ -53,13 +54,38 @@ class WebSocketHandler(websocket.WebSocketHandler):
 
         logger.info(message_data)
 
-        if 'name' in message_data:
-            if message_data['name'] == 'HIT':
+        name = message_data.get('name', None)
+        data = message_data.get('data', None)
+        if name:
+            if name == 'HIT':
                 app.on_sniffer_data(message_data)
-            elif message_data['name'] == 'READY':
+            elif name == 'READY':
                 if app.game is None:
                     app.game = Cricket()
                 self.refresh(app.game.screenshot(), [self])
+            elif name == 'SET_WIFI' and data:
+                ssid = data.get('ssid', None)
+                password = data.get('password', None)
+
+                if not ssid or not password:
+                    return
+
+                cmd = [
+                    'sudo',
+                    'nmcli',
+                    'con',
+                    'modify',
+                    'WifiClient',
+                    '802-11-wireless.ssid',
+                    ssid,
+                    '802-11-wireless-security.psk',
+                    password,
+                ]
+                proc = tornado.Subprocess(cmd)
+                await proc.wait_for_exit()
+
+                up_cmd = 'sudo nmcli con up WifiClient &'
+                os.system(up_cmd)
             elif app.game and app.game.on_message(message_data):
                 self.refresh(app.game.screenshot(), app.clients)
 
@@ -138,11 +164,11 @@ class Application(web.Application):
             return
 
         if status != self.network_status:
+            logger.info(f'Active connections: {status}')
+
             self.network_status = status
             for client in self.clients:
                 self.send_network_status(client)
-
-        logger.info(f'Active connections: {status}')
 
     # ----
     def on_sniffer_data(self, data, spawner=None):
