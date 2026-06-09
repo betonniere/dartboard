@@ -84,8 +84,11 @@ class WebSocketHandler(websocket.WebSocketHandler):
                 proc = tornado.Subprocess(cmd)
                 await proc.wait_for_exit()
 
-                up_cmd = 'sudo nmcli con up WifiClient &'
-                os.system(up_cmd)
+                cmd = ['sudo', ' nmcli', 'con', 'up', 'WifiClient']
+                proc = tornado.Subprocess(cmd)
+                await proc.wait_for_exit()
+            elif app.game and app.game.on_message(message_data):
+                self.refresh(app.game.screenshot(), app.clients)
             elif app.game and app.game.on_message(message_data):
                 self.refresh(app.game.screenshot(), app.clients)
 
