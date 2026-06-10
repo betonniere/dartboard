@@ -4,7 +4,6 @@
 
 INTERFACE="wlan0"
 HOTSPOT_NAME="HotspotDartboard"
-CLIENT_NAME="WifiClient"
 GPIO_PIN=21
 
 # Attente de l'interface Wi-Fi
@@ -13,11 +12,21 @@ while [ ! -d "/sys/class/net/$INTERFACE" ]; do
 done
 
 # Activation du Wi-Fi
-rfkill unblock wifi
 nmcli radio wifi on
 
 # Assurer que l'interface est gérée par NetworkManager
 nmcli device set "$INTERFACE" managed yes
+
+# Attendre que NetworkManager soit prêt à gérer l'interface
+WAIT=0
+while [ $WAIT -lt 10 ]; do
+    STATE=$(nmcli -t -f DEVICE,STATE device | grep "^${INTERFACE}:" | cut -d: -f2)
+    if [ "$STATE" != "unmanaged" ] && [ -n "$STATE" ]; then
+        break
+    fi
+    sleep 0.5
+    WAIT=$((WAIT + 1))
+done
 
 # Détection du mode par lecture du GPIO
 pinctrl set "$GPIO_PIN" ip pu
@@ -51,3 +60,5 @@ if [ $CONNECTED -eq 0 ]; then
 else
     echo "[Dartboard] Connexion WifiClient établie avec succès en ${ATTEMPT}s."
 fi
+
+exit 0

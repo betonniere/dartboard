@@ -23,6 +23,7 @@ from rich.logging import RichHandler
 
 import tornado
 import tornado.web as web
+import tornado.process
 import tornado.websocket as websocket
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -62,7 +63,7 @@ class WebSocketHandler(websocket.WebSocketHandler):
             elif name == 'READY':
                 if app.game is None:
                     app.game = Cricket()
-                self.refresh(app.game.screenshot(), [self])
+                self.refresh()
             elif name == 'SET_WIFI' and data:
                 ssid = data.get('ssid', None)
                 password = data.get('password', None)
@@ -81,29 +82,30 @@ class WebSocketHandler(websocket.WebSocketHandler):
                     '802-11-wireless-security.psk',
                     password,
                 ]
-                proc = tornado.Subprocess(cmd)
+                proc = tornado.process.Subprocess(cmd)
                 await proc.wait_for_exit()
 
-                cmd = ['sudo', ' nmcli', 'con', 'up', 'WifiClient']
-                proc = tornado.Subprocess(cmd)
+                cmd = ['sudo', 'nmcli', 'con', 'up', 'WifiClient']
+                proc = tornado.process.Subprocess(cmd)
                 await proc.wait_for_exit()
             elif app.game and app.game.on_message(message_data):
-                self.refresh(app.game.screenshot(), app.clients)
-            elif app.game and app.game.on_message(message_data):
-                self.refresh(app.game.screenshot(), app.clients)
+                for client in app.clients:
+                    client.refresh()
 
     # ----
     def on_close(self):
         self.application.clients.remove(self)
 
     # ----
-    def refresh(self, game_screenshot, sockets):
+    def refresh(self):
         if self.application.game:
             game_msg = json.dumps(
-                {'name': 'GAME', 'data': json.loads(game_screenshot)}
+                {
+                    'name': 'GAME',
+                    'data': json.loads(self.application.game.screenshot()),
+                }
             )
-            for s in sockets:
-                s.write_message(game_msg)
+            self.write_message(game_msg)
 
 
 # ----------------------------------
@@ -196,9 +198,8 @@ class Application(web.Application):
             elif 'function' in data:
                 self.game.on_function(data['function'])
 
-            game_screenshot = self.game.screenshot()
             for client in self.clients:
-                client.refresh(game_screenshot, self.clients)
+                client.refresh()
 
             self.idle = IOLoop.current().call_later(
                 delay=3, callback=self.on_idle

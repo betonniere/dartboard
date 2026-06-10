@@ -304,6 +304,6 @@ class Screen
   {
     let caller = this;
 
-    setTimeout (function () {caller.connect ();}, 5000);
+    setTimeout (function () {caller.connect ();}, 1000);
   }
 }
