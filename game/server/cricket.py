@@ -195,7 +195,7 @@ class Cricket:
         if self.rounds_to_go < Cricket.max_rounds:
             return False
 
-        if len(self.players) >= 0 and len(self.players) < 8:
+        if len(self.players) < 8:
             if player is None:
                 player = Player()
                 player.set_name('P' + str(len(self.players) + 1))

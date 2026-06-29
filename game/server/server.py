@@ -18,6 +18,7 @@ import argparse
 import json
 import logging
 import subprocess
+from urllib.parse import urlparse
 
 from rich.logging import RichHandler
 
@@ -39,7 +40,8 @@ logger = logging.getLogger('dartboard.server')
 class WebSocketHandler(websocket.WebSocketHandler):
     # ----
     def check_origin(self, origin):
-        return True
+        parsed = urlparse(origin)
+        return parsed.netloc == self.request.host
 
     # ----
     def open(self):
